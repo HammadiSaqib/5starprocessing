@@ -503,102 +503,16 @@ export default function DashboardPage() {
       {/* Pending Overlay */}
       <AnimatePresence>
         {pending && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-xl"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="relative w-full max-w-lg rounded-3xl border border-white/20 bg-white/90 backdrop-blur-2xl shadow-2xl overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 to-amber-600"></div>
-              <div className="px-8 pt-10 pb-8">
-                <div className="flex flex-col items-center text-center mb-6">
-                  <div className="w-20 h-20 rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center mb-6 shadow-inner ring-8 ring-amber-50/50">
-                    <Clock className="w-10 h-10" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-slate-900 mb-2">Dashboard Locked</h2>
-                  <p className="text-slate-500 text-lg">Your account is currently under review.</p>
-                </div>
-                
-                <div className="bg-amber-50 rounded-2xl p-6 mb-8 border border-amber-100">
-                  <div className="flex items-start gap-4">
-                    <Shield className="w-6 h-6 text-amber-600 mt-1 shrink-0" />
-                    <div>
-                      <h3 className="font-bold text-amber-900 mb-1">Status: Pending</h3>
-                      <p className="text-amber-800/80 text-sm leading-relaxed">
-                        We are currently reviewing your submitted documents. This process usually takes 24-48 hours. You will be notified via email once approved.
-                      </p>
-                      {me?.status_reason && (
-                        <div className="mt-3 pt-3 border-t border-amber-200 text-sm font-medium text-amber-900">
-                          Note: {me.status_reason}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div className="h-full w-1/3 bg-amber-500 animate-[shimmer_2s_infinite] relative overflow-hidden">
-                    <div className="absolute inset-0 bg-white/30 skew-x-12"></div>
-                  </div>
-                </div>
-                <p className="text-center text-xs text-slate-400 mt-3 font-medium uppercase tracking-wider">Verification in progress</p>
-              </div>
-            </motion.div>
-          </motion.div>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-xl">
+            {/* Overlay hidden intentionally */}
+          </div>
         )}
 
         {/* Possed (Paused) Overlay */}
         {possed && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-xl"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="relative w-full max-w-lg rounded-3xl border border-white/20 bg-white/90 backdrop-blur-2xl shadow-2xl overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-violet-500 to-purple-600"></div>
-              <div className="px-8 pt-10 pb-8">
-                <div className="flex flex-col items-center text-center mb-6">
-                  <div className="w-20 h-20 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center mb-6 shadow-inner ring-8 ring-violet-50/50">
-                    <ShieldAlert className="w-10 h-10" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-slate-900 mb-2">Access Paused</h2>
-                  <p className="text-slate-500 text-lg">Your dashboard access has been temporarily suspended.</p>
-                </div>
-                
-                <div className="bg-violet-50 rounded-2xl p-6 mb-8 border border-violet-100">
-                  <div className="flex items-start gap-4">
-                    <Shield className="w-6 h-6 text-violet-600 mt-1 shrink-0" />
-                    <div>
-                      <h3 className="font-bold text-violet-900 mb-1">Status: Possed</h3>
-                      <p className="text-violet-800/80 text-sm leading-relaxed">
-                        Please contact our support team to resolve any outstanding issues and restore full access to your account.
-                      </p>
-                      {me?.status_reason && (
-                        <div className="mt-3 pt-3 border-t border-violet-200 text-sm font-medium text-violet-900">
-                          Reason: {me.status_reason}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <button className="w-full py-4 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 transition-colors shadow-lg shadow-violet-600/20 flex items-center justify-center gap-2">
-                  <Mail className="w-5 h-5" />
-                  Contact Support Team
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-xl">
+             {/* Overlay hidden intentionally */}
+          </div>
         )}
       </AnimatePresence>
 
