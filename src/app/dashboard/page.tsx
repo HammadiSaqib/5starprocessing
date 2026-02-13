@@ -1,61 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  LayoutDashboard,
-  Settings,
-  FileText,
-  CreditCard,
-  Bell,
-  Search,
-  Menu,
-  ChevronRight,
-  User,
-  LogOut,
-  Clock,
-  CheckCircle,
-  Activity,
-  UploadCloud,
-  HelpCircle,
-  Phone,
-} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronRight, User, Clock, CheckCircle, Activity, UploadCloud, HelpCircle, Phone, Bell, FileText } from "lucide-react";
 
-const SidebarItem = ({ 
-  id, 
-  icon: Icon, 
-  label, 
-  activeTab, 
-  onClick 
-}: { 
-  id: string; 
-  icon: React.ElementType; 
-  label: string; 
-  activeTab: string; 
-  onClick: () => void; 
-}) => (
-  <button
-    onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
-      activeTab === id 
-        ? "bg-brand-600 text-white shadow-lg shadow-brand-600/20" 
-        : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-    }`}
-  >
-    <Icon className={`w-5 h-5 ${activeTab === id ? "text-white" : "text-current"}`} />
-    <span>{label}</span>
-    {activeTab === id && (
-      <motion.div layoutId="activeIndicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />
-    )}
-  </button>
-);
+// Page-specific content; shared dashboard shell is in layout.tsx
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [me, setMe] = useState<{ status?: string; status_reason?: string; name?: string; email?: string; custom_support_number?: string | null } | null>(null);
   const [appInfo, setAppInfo] = useState<{ status?: string; merchantId?: string | null; trackingId?: string | null } | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     (async () => {
@@ -90,12 +45,6 @@ export default function DashboardPage() {
 
   // const pending = me?.status === "Pending";
   // const possed = me?.status === "Possed";
-
-  // Animation Variants
-  const sidebarVariants = {
-    closed: { x: "-100%", opacity: 0 },
-    open: { x: 0, opacity: 1 },
-  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -140,126 +89,9 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 overflow-hidden relative">
-      
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
-      <motion.aside 
-        variants={sidebarVariants}
-        initial="closed"
-        animate={sidebarOpen ? "open" : "open"} // Always open on desktop via CSS, controlled on mobile
-        className={`fixed lg:relative inset-y-0 left-0 w-72 bg-white border-r border-slate-200 z-50 transform lg:transform-none transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-      >
-        <div className="h-full flex flex-col p-6">
-          <div className="flex items-center gap-3 px-2 mb-10">
-            <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-600/20">
-              <span className="text-white font-bold text-xl">5</span>
-            </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900">Star Processing</span>
-          </div>
-
-          <div className="space-y-2 flex-1">
-            <div className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Menu</div>
-            <SidebarItem 
-              id="overview" 
-              icon={LayoutDashboard} 
-              label="Overview" 
-              activeTab={activeTab} 
-              onClick={() => setActiveTab("overview")} 
-            />
-            <SidebarItem 
-              id="applications" 
-              icon={FileText} 
-              label="Applications" 
-              activeTab={activeTab} 
-              onClick={() => setActiveTab("applications")} 
-            />
-            <SidebarItem 
-              id="documents" 
-              icon={CreditCard} 
-              label="Documents" 
-              activeTab={activeTab} 
-              onClick={() => setActiveTab("documents")} 
-            />
-            <SidebarItem 
-              id="settings" 
-              icon={Settings} 
-              label="Settings" 
-              activeTab={activeTab} 
-              onClick={() => setActiveTab("settings")} 
-            />
-          </div>
-
-          <div className="mt-auto pt-6 border-t border-slate-100">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 mb-4">
-              <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-sm">
-                {me?.name ? me.name.charAt(0) : "C"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 truncate">{me?.name || "Client"}</p>
-                <p className="text-xs text-slate-500 truncate">{me?.email || "Loading..."}</p>
-              </div>
-            </div>
-            <Link 
-              href="/api/auth/logout" 
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Sign Out</span>
-            </Link>
-          </div>
-        </div>
-      </motion.aside>
-
-      {/* Main Content */}
-      <main className="flex-1 h-screen overflow-y-auto overflow-x-hidden relative">
-        {/* Header */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <h1 className="text-xl font-bold text-slate-900 capitalize">
-              {activeTab}
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-brand-500 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className="pl-10 pr-4 py-2 bg-slate-100 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-xl text-sm w-64 transition-all outline-none border"
-              />
-            </div>
-            <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-xl relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-          </div>
-        </header>
-
-        <div className="p-6 md:p-10 max-w-7xl mx-auto">
-          <AnimatePresence mode="wait">
-            
-            {/* OVERVIEW TAB */}
-            {activeTab === "overview" && (
+    <div className="p-6 md:p-10 max-w-7xl mx-auto">
+          
+            {/* OVERVIEW */}
               <motion.div
                 key="overview"
                 variants={containerVariants}
@@ -279,10 +111,10 @@ export default function DashboardPage() {
                       Your application is currently being processed. We&apos;ve updated your dashboard with the latest status and pending actions.
                     </p>
                     <div className="flex flex-wrap gap-4">
-                      <Link href="/portal/application" className="px-6 py-3 bg-white text-red-600 hover:text-red-700 rounded-xl font-bold hover:bg-brand-50 transition-colors shadow-lg shadow-black/10 flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-red-600" />
+                      <button onClick={() => { router.push("/dashboard/applications"); }} className="px-6 py-3 bg-white !text-red-600 hover:text-red-700 rounded-xl font-bold hover:bg-brand-50 transition-colors shadow-lg shadow-black/10 flex items-center gap-2">
+                        <Activity className="w-5 h-5" color="#dc2626" />
                         Submit Quick App
-                      </Link>
+                      </button>
                       {appInfo?.status === "approved" && (
                         <div className="px-6 py-3 bg-white/10 text-white rounded-xl font-semibold border border-white/20 backdrop-blur-sm flex items-center gap-3">
                           <div className="flex items-center gap-2">
@@ -311,9 +143,9 @@ export default function DashboardPage() {
                           {me.custom_support_number}
                         </a>
                       ) : (
-                        <Link href="/portal/application" className="px-6 py-3 bg-brand-700/50 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors border border-white/10 backdrop-blur-sm">
+                        <button onClick={() => { router.push("/dashboard/applications"); }} className="px-6 py-3 bg-brand-700/50 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors border border-white/10 backdrop-blur-sm">
                           Submit Application
-                        </Link>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -431,10 +263,9 @@ export default function DashboardPage() {
 
                 </div>
               </motion.div>
-            )}
 
             {/* SETTINGS TAB */}
-            {activeTab === "settings" && (
+            {false && (
               <motion.div
                 key="settings"
                 variants={containerVariants}
@@ -519,56 +350,10 @@ export default function DashboardPage() {
               </motion.div>
             )}
 
-            {/* APPLICATIONS TAB (Placeholder) */}
-            {activeTab === "applications" && (
-              <motion.div
-                key="applications"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-10 text-center">
-                  <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <FileText className="w-10 h-10 text-brand-500" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2">No Active Applications</h2>
-                  <p className="text-slate-500 max-w-md mx-auto mb-8">You haven&apos;t submitted any applications yet. Start a new application to get approved for our services.</p>
-                  <button className="px-8 py-3 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition-colors shadow-lg shadow-brand-600/20">
-                    Start New Application
-                  </button>
-                </div>
-              </motion.div>
-            )}
+            {/* APPLICATIONS TAB */}
+            {/* applications content moved to /dashboard/applications/page.tsx */}
 
-            {/* DOCUMENTS TAB (Placeholder) */}
-            {activeTab === "documents" && (
-              <motion.div
-                key="documents"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-10 text-center">
-                  <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CreditCard className="w-10 h-10 text-brand-500" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2">Documents Repository</h2>
-                  <p className="text-slate-500 max-w-md mx-auto mb-8">Securely upload and manage your business documents here. All files are encrypted.</p>
-                  <button className="px-8 py-3 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition-colors shadow-lg shadow-brand-600/20">
-                    Upload Document
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-          </AnimatePresence>
+            {/* DOCUMENTS content moved to /dashboard/documents/page.tsx */}
         </div>
-      </main>
-
-      {/* GATING OVERLAYS REMOVED */}
-
-    </div>
   );
 }

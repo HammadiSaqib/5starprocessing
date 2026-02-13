@@ -226,6 +226,30 @@ export async function ensurePortalSchema() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS application_them (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        \`brand-50\` VARCHAR(9) NOT NULL,
+        \`brand-100\` VARCHAR(9) NOT NULL,
+        \`brand-200\` VARCHAR(9) NOT NULL,
+        \`brand-300\` VARCHAR(9) NOT NULL,
+        \`brand-400\` VARCHAR(9) NOT NULL,
+        \`brand-500\` VARCHAR(9) NOT NULL,
+        \`brand-600\` VARCHAR(9) NOT NULL,
+        \`brand-700\` VARCHAR(9) NOT NULL,
+        \`brand-800\` VARCHAR(9) NOT NULL,
+        \`brand-900\` VARCHAR(9) NOT NULL,
+        \`brand-950\` VARCHAR(9) NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+    const [themeRows] = await conn.query<RowDataPacket[]>("SELECT id FROM application_them LIMIT 1");
+    if (!themeRows.length) {
+      await conn.query(
+        "INSERT INTO application_them (`brand-50`, `brand-100`, `brand-200`, `brand-300`, `brand-400`, `brand-500`, `brand-600`, `brand-700`, `brand-800`, `brand-900`, `brand-950`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        ["#fef2f2", "#fee2e2", "#fecaca", "#fca5a5", "#f87171", "#ef4444", "#dc2626", "#b91c1c", "#991b1b", "#7f1d1d", "#450a0a"]
+      );
+    }
     const [phoneCol] = await conn.query<RowDataPacket[]>(
       "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'phone'"
     );
@@ -291,6 +315,83 @@ export async function ensurePortalSchema() {
   }
 }
 
+export async function getApplicationTheme() {
+  await ensurePortalSchema();
+  const conn = await getConnection();
+  try {
+    interface ThemeRow extends RowDataPacket {
+      ["brand-50"]: string;
+      ["brand-100"]: string;
+      ["brand-200"]: string;
+      ["brand-300"]: string;
+      ["brand-400"]: string;
+      ["brand-500"]: string;
+      ["brand-600"]: string;
+      ["brand-700"]: string;
+      ["brand-800"]: string;
+      ["brand-900"]: string;
+      ["brand-950"]: string;
+    }
+    const [rows] = await conn.query<ThemeRow[]>("SELECT `brand-50`, `brand-100`, `brand-200`, `brand-300`, `brand-400`, `brand-500`, `brand-600`, `brand-700`, `brand-800`, `brand-900`, `brand-950` FROM application_them LIMIT 1");
+    const r = rows[0] || null;
+    if (!r) {
+      return {
+        50: "#fef2f2",
+        100: "#fee2e2",
+        200: "#fecaca",
+        300: "#fca5a5",
+        400: "#f87171",
+        500: "#ef4444",
+        600: "#dc2626",
+        700: "#b91c1c",
+        800: "#991b1b",
+        900: "#7f1d1d",
+        950: "#450a0a",
+      };
+    }
+    return {
+      50: String(r["brand-50"]),
+      100: String(r["brand-100"]),
+      200: String(r["brand-200"]),
+      300: String(r["brand-300"]),
+      400: String(r["brand-400"]),
+      500: String(r["brand-500"]),
+      600: String(r["brand-600"]),
+      700: String(r["brand-700"]),
+      800: String(r["brand-800"]),
+      900: String(r["brand-900"]),
+      950: String(r["brand-950"]),
+    };
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function updateApplicationTheme(colors: { [k: string]: string }) {
+  await ensurePortalSchema();
+  const conn = await getConnection();
+  try {
+    await conn.query(
+      "UPDATE application_them SET `brand-50` = ?, `brand-100` = ?, `brand-200` = ?, `brand-300` = ?, `brand-400` = ?, `brand-500` = ?, `brand-600` = ?, `brand-700` = ?, `brand-800` = ?, `brand-900` = ?, `brand-950` = ?",
+      [
+        String(colors["50"] || ""),
+        String(colors["100"] || ""),
+        String(colors["200"] || ""),
+        String(colors["300"] || ""),
+        String(colors["400"] || ""),
+        String(colors["500"] || ""),
+        String(colors["600"] || ""),
+        String(colors["700"] || ""),
+        String(colors["800"] || ""),
+        String(colors["900"] || ""),
+        String(colors["950"] || ""),
+      ]
+    );
+    return true;
+  } finally {
+    await conn.end();
+  }
+}
 export async function upsertUserAuto(name: string, email: string, phone: string) {
   await ensureUsersTable();
   await ensurePortalSchema();

@@ -5,17 +5,32 @@
   --foreground: #171717;
 
   /* Brand Palette - Red */
-  --brand-50:  #fef2f2;
-  --brand-100: #fee2e2;
-  --brand-200: #fecaca;
-  --brand-300: #fca5a5;
-  --brand-400: #f87171;
-  --brand-500: #ef4444; /* Base Primary */
-  --brand-600: #dc2626;
-  --brand-700: #b91c1c;
-  --brand-800: #991b1b;
-  --brand-900: #7f1d1d;
-  --brand-950: #450a0a;
+  --brand-50:  var(--db-brand-50);
+  --brand-100: var(--db-brand-100);
+  --brand-200: var(--db-brand-200);
+  --brand-300: var(--db-brand-300);
+  --brand-400: var(--db-brand-400);
+  --brand-500: var(--db-brand-500);
+  --brand-600: var(--db-brand-600);
+  --brand-700: var(--db-brand-700);
+  --brand-800: var(--db-brand-800);
+  --brand-900: var(--db-brand-900);
+  --brand-950: var(--db-brand-950);
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* slate-300 */
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
 }
 
 
