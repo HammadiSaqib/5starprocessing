@@ -18,6 +18,7 @@ export default function DashboardLayout({
     status_reason?: string;
     name?: string;
     email?: string;
+    affiliate_status?: string | null;
   } | null>(null);
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function DashboardLayout({
             status_reason: data.status_reason,
             name: data.name || "Valued Client",
             email: data.email || "client@example.com",
+            affiliate_status: data.affiliate_status || null,
           });
         }
       } catch {}

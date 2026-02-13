@@ -22,7 +22,8 @@ export async function GET(request: Request) {
     const status_reason = typeof (user as { status_reason?: string | null }).status_reason !== "undefined" ? (user as { status_reason?: string | null }).status_reason : null;
     const referral_slug = (user as { referral_slug?: string }).referral_slug || null;
     const custom_support_number = (user as { custom_support_number?: string }).custom_support_number || null;
-    return NextResponse.json({ id: user.id, name: user.name, email: user.email, role, status, status_reason, referral_slug, custom_support_number }, { status: 200 });
+    const affiliate_status = (user as { affiliate_status?: string }).affiliate_status || null;
+    return NextResponse.json({ id: user.id, name: user.name, email: user.email, role, status, status_reason, referral_slug, custom_support_number, affiliate_status }, { status: 200 });
   } catch {
     return NextResponse.json({ error: "Me error" }, { status: 500 });
   }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type React from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./globals.css";
@@ -28,28 +29,24 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const theme = await getApplicationTheme();
-  const script = `
-    (function(){
-      var r = document.documentElement.style;
-      r.setProperty('--db-brand-50','${theme[50]}');
-      r.setProperty('--db-brand-100','${theme[100]}');
-      r.setProperty('--db-brand-200','${theme[200]}');
-      r.setProperty('--db-brand-300','${theme[300]}');
-      r.setProperty('--db-brand-400','${theme[400]}');
-      r.setProperty('--db-brand-500','${theme[500]}');
-      r.setProperty('--db-brand-600','${theme[600]}');
-      r.setProperty('--db-brand-700','${theme[700]}');
-      r.setProperty('--db-brand-800','${theme[800]}');
-      r.setProperty('--db-brand-900','${theme[900]}');
-      r.setProperty('--db-brand-950','${theme[950]}');
-    })();
-  `;
+  const htmlStyle = {
+    ["--db-brand-50" as string]: theme[50],
+    ["--db-brand-100" as string]: theme[100],
+    ["--db-brand-200" as string]: theme[200],
+    ["--db-brand-300" as string]: theme[300],
+    ["--db-brand-400" as string]: theme[400],
+    ["--db-brand-500" as string]: theme[500],
+    ["--db-brand-600" as string]: theme[600],
+    ["--db-brand-700" as string]: theme[700],
+    ["--db-brand-800" as string]: theme[800],
+    ["--db-brand-900" as string]: theme[900],
+    ["--db-brand-950" as string]: theme[950],
+  } as React.CSSProperties;
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html lang="en" data-scroll-behavior="smooth" style={htmlStyle}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <script dangerouslySetInnerHTML={{ __html: script }} />
         {children}
       </body>
     </html>

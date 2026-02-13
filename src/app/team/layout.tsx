@@ -11,6 +11,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
     { href: "/team", label: "Overview", icon: LayoutDashboard },
     { href: "/team/users", label: "Users", icon: Users },
     { href: "/team/submints", label: "Submissions", icon: FileText },
+    { href: "/team/school", label: "School", icon: FileText }, // Reusing FileText or I should import another icon
     { href: "/team/settings", label: "Settings", icon: Settings },
   ];
 

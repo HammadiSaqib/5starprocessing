@@ -10,10 +10,14 @@ import {
   ShieldCheck,
   HelpCircle,
   MoreVertical,
-  Zap,
-  Menu
+  Menu,
+  Handshake,
+  Users,
+  GraduationCap
 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import AffiliateModal from "./AffiliateModal";
 
 function SidebarItem({
   icon: Icon,
@@ -40,13 +44,13 @@ function SidebarItem({
       }`}
       title={isCollapsed ? label : undefined}
     >
-      <div className={`p-1.5 rounded-lg transition-all duration-300 ${
+      <span className={`p-1.5 rounded-lg transition-all duration-300 ${
         active ? "bg-brand-100 text-brand-600" : "bg-transparent text-slate-400 group-hover:text-slate-600"
       }`}>
         <Icon 
           className="w-5 h-5" 
         />
-      </div>
+      </span>
       {!isCollapsed && (
         <>
           <span className="text-sm tracking-tight whitespace-nowrap">{label}</span>
@@ -58,12 +62,12 @@ function SidebarItem({
             </span>
           )}
           {active && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-600 rounded-r-full"></div>
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-600 rounded-r-full"></span>
           )}
         </>
       )}
       {isCollapsed && badge && (
-        <div className="absolute top-2 right-2 w-2 h-2 bg-brand-500 rounded-full ring-2 ring-white"></div>
+        <span className="absolute top-2 right-2 w-2 h-2 bg-brand-500 rounded-full ring-2 ring-white"></span>
       )}
     </button>
   );
@@ -74,12 +78,14 @@ export default function DashboardSidebar({
   isCollapsed,
   toggleCollapse
 }: {
-  me: { name?: string; email?: string } | null;
+  me: { name?: string; email?: string; affiliate_status?: string | null } | null;
   isCollapsed: boolean;
   toggleCollapse: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [showAffiliateModal, setShowAffiliateModal] = useState(false);
+
   const go = (path: string) => () => router.push(path);
   
   const isActive = (id: string) => {
@@ -92,6 +98,15 @@ export default function DashboardSidebar({
   };
 
   return (
+    <>
+    <AffiliateModal 
+      isOpen={showAffiliateModal} 
+      onClose={() => setShowAffiliateModal(false)}
+      onSuccess={() => {
+        // Optimistic update could go here, or just let the page refresh handle it eventually
+        window.location.reload(); 
+      }}
+    />
     <div className="h-full flex flex-col bg-white border-r border-slate-100 relative shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-20">
       {/* Brand Header - Modern & Clean */}
       <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} border-b border-slate-50`}>
@@ -119,11 +134,11 @@ export default function DashboardSidebar({
           className={`p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all ${isCollapsed ? 'bg-slate-50 text-slate-600' : ''}`}
         >
            {isCollapsed ? (
-             <div className="w-10 h-10 bg-gradient-to-br from-brand-600 to-brand-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/30 text-white">
+             <span className="w-10 h-10 bg-gradient-to-br from-brand-600 to-brand-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/30 text-white">
                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6">
                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                </svg>
-             </div>
+             </span>
            ) : (
              <Menu className="w-5 h-5" />
            )}
@@ -160,6 +175,24 @@ export default function DashboardSidebar({
             onClick={go("/dashboard/documents")}
             isCollapsed={isCollapsed}
           />
+          <SidebarItem
+            icon={GraduationCap}
+            label="School"
+            active={isActive("school")}
+            onClick={go("/dashboard/school")}
+            isCollapsed={isCollapsed}
+          />
+          
+          {me?.affiliate_status === "approved" && (
+            <SidebarItem
+              icon={Users}
+              label="Referrals"
+              active={isActive("referrals")}
+              onClick={go("/dashboard/referrals")}
+              isCollapsed={isCollapsed}
+              badge="Partner"
+            />
+          )}
         </div>
 
         <div className="space-y-1">
@@ -186,23 +219,40 @@ export default function DashboardSidebar({
       </div>
 
       {/* Dynamic Widget Card - Clean Pro Look */}
-      {!isCollapsed && (
+      {!isCollapsed && (!me?.affiliate_status || me?.affiliate_status !== "approved") && (
         <div className="px-4 pb-4">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white shadow-xl shadow-slate-900/10 group cursor-pointer hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white shadow-xl shadow-slate-900/10 transition-all duration-300">
             <div className="absolute top-0 right-0 w-24 h-24 bg-brand-500/20 rounded-full blur-2xl -mr-6 -mt-6 group-hover:bg-brand-500/30 transition-colors"></div>
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center border border-white/10 backdrop-blur-sm">
-                  <Zap className="w-4 h-4 text-yellow-300" />
+                  <Handshake className="w-4 h-4 text-brand-200" />
                 </div>
-                <h4 className="font-bold text-sm">Go Premium</h4>
+                <h4 className="font-bold text-sm">Become An Affiliate</h4>
+                {me?.affiliate_status === "pending" && (
+                  <span className="ml-auto text-[10px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 border border-amber-200 font-bold">
+                    Pending
+                  </span>
+                )}
               </div>
               <p className="text-slate-300 text-[11px] mb-3 leading-relaxed opacity-90">
                 Unlock higher limits & faster processing.
               </p>
-              <button className="w-full py-2 bg-white text-slate-900 rounded-lg font-bold text-[11px] hover:bg-brand-50 hover:text-brand-700 transition-colors shadow-sm">
-                Upgrade Now
-              </button>
+              {me?.affiliate_status === "pending" ? (
+                <button
+                  className="w-full py-2 bg-white/60 text-white rounded-lg font-bold text-[11px] cursor-not-allowed"
+                  disabled
+                >
+                  Pending Approval
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowAffiliateModal(true)}
+                  className="w-full py-2 bg-white text-slate-900 rounded-lg font-bold text-[11px] hover:bg-brand-50 hover:text-brand-700 transition-colors shadow-sm"
+                >
+                  Apply Now
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -249,5 +299,6 @@ export default function DashboardSidebar({
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -54,6 +54,7 @@ export interface UserRow extends RowDataPacket {
   referral_slug?: string;
   referred_by?: number;
   custom_support_number?: string | null;
+  affiliate_status?: string | null;
 }
 
 export async function findUserByEmail(email: string) {
@@ -286,6 +287,12 @@ export async function ensurePortalSchema() {
     if (!referredByCol.length) {
       await conn.query("ALTER TABLE users ADD COLUMN referred_by INT NULL");
     }
+    const [affStatusCol] = await conn.query<RowDataPacket[]>(
+      "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'affiliate_status'"
+    );
+    if (!affStatusCol.length) {
+      await conn.query("ALTER TABLE users ADD COLUMN affiliate_status VARCHAR(20) DEFAULT NULL");
+    }
     const [hasOld] = await conn.query<RowDataPacket[]>(
       "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'application_sections'"
     );
@@ -310,6 +317,149 @@ export async function ensurePortalSchema() {
       }
       await conn.query("DROP TABLE application_sections");
     }
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS courses (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        course_url VARCHAR(255),
+        thumbnail_url VARCHAR(255),
+        product_file_url VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS course_videos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        course_id INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        video_url VARCHAR(255) NOT NULL,
+        position INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_course (course_id),
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+  } finally {
+    await conn.end();
+  }
+}
+
+export interface Course extends RowDataPacket {
+  id: number;
+  title: string;
+  description: string;
+  course_url?: string;
+  thumbnail_url?: string;
+  product_file_url?: string;
+  created_at: string;
+  updated_at: string;
+  videos?: CourseVideo[];
+}
+
+export interface CourseVideo extends RowDataPacket {
+  id: number;
+  course_id: number;
+  title: string;
+  video_url: string;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getAllCourses() {
+  const conn = await getConnection();
+  try {
+    const [rows] = await conn.query<Course[]>("SELECT * FROM courses ORDER BY created_at DESC");
+    return rows;
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function getCourseWithVideos(id: number) {
+  const conn = await getConnection();
+  try {
+    const [rows] = await conn.query<Course[]>("SELECT * FROM courses WHERE id = ?", [id]);
+    if (!rows.length) return null;
+    const course = rows[0];
+    const [videos] = await conn.query<CourseVideo[]>("SELECT * FROM course_videos WHERE course_id = ? ORDER BY position ASC, id ASC", [id]);
+    course.videos = videos;
+    return course;
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function createCourse(course: Omit<Course, 'id' | 'created_at' | 'updated_at' | 'videos'>, videos?: { title: string, video_url: string }[]) {
+  const conn = await getConnection();
+  try {
+    const [result] = await conn.query(
+      "INSERT INTO courses (title, description, course_url, thumbnail_url, product_file_url) VALUES (?, ?, ?, ?, ?)",
+      [course.title, course.description, course.course_url || null, course.thumbnail_url || null, course.product_file_url || null]
+    );
+    const insert = result as ResultSetHeader;
+    const courseId = insert.insertId;
+
+    if (videos && videos.length > 0) {
+      for (let i = 0; i < videos.length; i++) {
+        await conn.query(
+          "INSERT INTO course_videos (course_id, title, video_url, position) VALUES (?, ?, ?, ?)",
+          [courseId, videos[i].title, videos[i].video_url, i]
+        );
+      }
+    }
+    
+    return courseId;
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function updateCourse(id: number, course: Partial<Course>, videos?: { id?: number, title: string, video_url: string, position: number }[]) {
+  const conn = await getConnection();
+  try {
+    await conn.query(
+      "UPDATE courses SET title = ?, description = ?, course_url = ?, thumbnail_url = ?, product_file_url = ? WHERE id = ?",
+      [course.title, course.description, course.course_url || null, course.thumbnail_url || null, course.product_file_url || null, id]
+    );
+
+    if (videos) {
+      // Get existing videos
+      const [existing] = await conn.query<CourseVideo[]>("SELECT id FROM course_videos WHERE course_id = ?", [id]);
+      const existingIds = existing.map(v => v.id);
+      const incomingIds = videos.filter(v => v.id).map(v => v.id);
+      const toDelete = existingIds.filter(eid => !incomingIds.includes(eid));
+
+      if (toDelete.length > 0) {
+        await conn.query("DELETE FROM course_videos WHERE id IN (?)", [toDelete]);
+      }
+
+      for (const v of videos) {
+        if (v.id) {
+          await conn.query(
+            "UPDATE course_videos SET title = ?, video_url = ?, position = ? WHERE id = ?",
+            [v.title, v.video_url, v.position, v.id]
+          );
+        } else {
+          await conn.query(
+            "INSERT INTO course_videos (course_id, title, video_url, position) VALUES (?, ?, ?, ?)",
+            [id, v.title, v.video_url, v.position]
+          );
+        }
+      }
+    }
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function deleteCourse(id: number) {
+  const conn = await getConnection();
+  try {
+    await conn.query("DELETE FROM courses WHERE id = ?", [id]);
   } finally {
     await conn.end();
   }
@@ -656,6 +806,15 @@ export async function queueNotification(userId: number, applicationId: number | 
 const db = { getConnection };
 export default db;
 
+export async function updateUserAffiliateStatus(userId: number, status: string | null) {
+  const conn = await getConnection();
+  try {
+    await conn.query("UPDATE users SET affiliate_status = ? WHERE id = ?", [status, userId]);
+  } finally {
+    await conn.end();
+  }
+}
+
 export async function getApplicationStatusForUser(userId: number) {
   const conn = await getConnection();
   try {
@@ -675,6 +834,35 @@ export async function listDocumentsForApplication(applicationId: number) {
     const [rows] = await conn.query<RowDataPacket[]>(
       "SELECT id, doc_type, file_path, status, reviewed_at, reviewer_user_id FROM documents WHERE application_id = ? ORDER BY id DESC",
       [applicationId]
+    );
+    return rows;
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function listAffiliates() {
+  const conn = await getConnection();
+  try {
+    const [rows] = await conn.query<RowDataPacket[]>(
+      `SELECT u.id, u.name, u.email, u.affiliate_status, u.created_at, u.phone,
+       (SELECT COUNT(*) FROM users r WHERE r.referred_by = u.id) as referral_count 
+       FROM users u 
+       WHERE u.affiliate_status IS NOT NULL 
+       ORDER BY u.created_at DESC`
+    );
+    return rows;
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function getReferrals(userId: number) {
+  const conn = await getConnection();
+  try {
+    const [rows] = await conn.query<RowDataPacket[]>(
+      "SELECT id, name, email, status, created_at FROM users WHERE referred_by = ? ORDER BY created_at DESC",
+      [userId]
     );
     return rows;
   } finally {

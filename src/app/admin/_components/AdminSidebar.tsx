@@ -2,16 +2,18 @@
  
  import Link from "next/link";
  import { usePathname } from "next/navigation";
- import { LayoutDashboard, Users, FileText, Settings, LogOut } from "lucide-react";
- 
- export default function AdminSidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
-   const pathname = usePathname();
-   const nav = [
-     { href: "/admin/overview", label: "Dashboard", icon: LayoutDashboard },
-     { href: "/admin/applications", label: "Applications", icon: FileText },
-     { href: "/admin/agent-management", label: "Agent Management", icon: Users },
-     { href: "/admin/settings", label: "Settings", icon: Settings },
-   ];
+ import { LayoutDashboard, Users, FileText, Settings, LogOut, Handshake, GraduationCap } from "lucide-react";
+
+export default function AdminSidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
+  const pathname = usePathname();
+  const nav = [
+    { href: "/admin/overview", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/applications", label: "Applications", icon: FileText },
+    { href: "/admin/agent-management", label: "Agent Management", icon: Users },
+    { href: "/admin/affiliates", label: "Affiliates", icon: Handshake },
+    { href: "/admin/school", label: "School", icon: GraduationCap },
+    { href: "/admin/settings", label: "Settings", icon: Settings },
+  ];
    const isActive = (href: string) => pathname?.startsWith(href);
  
    return (
