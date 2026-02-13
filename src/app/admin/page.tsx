@@ -36,6 +36,7 @@ import {
 
 interface AdminApp {
   id: number;
+  user_id: number;
   name: string;
   email: string;
   phone?: string;
@@ -43,6 +44,7 @@ interface AdminApp {
   tag?: string | null;
   industry?: string | null;
   created_at?: string;
+  custom_support_number?: string | null;
 }
 
 const SidebarItem = ({ 
@@ -84,6 +86,7 @@ export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [apps, setApps] = useState<AdminApp[]>([]);
   interface AdminAgent { id: number; name: string; email: string; phone?: string | null; status?: string; role?: string; referral_count?: number; created_at?: string; }
+  interface AdminClient { id: number; name: string; email: string; status?: string; created_at?: string }
   const [agents, setAgents] = useState<AdminAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,8 +98,16 @@ export default function AdminPage() {
   const [copied, setCopied] = useState(false);
   
   const [selectedAgent, setSelectedAgent] = useState<AdminAgent | null>(null);
-  const [agentClients, setAgentClients] = useState<any[]>([]);
+  const [agentClients, setAgentClients] = useState<AdminClient[]>([]);
   const [loadingClients, setLoadingClients] = useState(false);
+
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [selectedAppForSupport, setSelectedAppForSupport] = useState<AdminApp | null>(null);
+  const [supportNumberInput, setSupportNumberInput] = useState("");
+  const [savingSupport, setSavingSupport] = useState(false);
+  const [supportNumbers, setSupportNumbers] = useState<{ id: number; number: string; label?: string | null }[]>([]);
+  const [newSupportNumber, setNewSupportNumber] = useState("");
+  const [newSupportLabel, setNewSupportLabel] = useState("");
 
   const fetchAgentClients = async (agentId: number) => {
     setLoadingClients(true);
@@ -105,7 +116,7 @@ export default function AdminPage() {
         const res = await fetch(`/api/admin/agents/${agentId}/clients`);
         if (res.ok) {
             const data = await res.json();
-            setAgentClients(data);
+            setAgentClients(data as AdminClient[]);
         }
     } catch (e) {
         console.error("Failed to fetch clients", e);
@@ -117,6 +128,90 @@ export default function AdminPage() {
   const handleAgentClick = (agent: AdminAgent) => {
     setSelectedAgent(agent);
     fetchAgentClients(agent.id);
+  };
+
+  const openSupportModal = (app: AdminApp) => {
+    setSelectedAppForSupport(app);
+    setSupportNumberInput(app.custom_support_number || "");
+    setShowSupportModal(true);
+  };
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/support-numbers");
+        if (res.ok) {
+          const data = await res.json();
+          setSupportNumbers(Array.isArray(data) ? data : []);
+        }
+      } catch {}
+    })();
+  }, [showSupportModal]);
+
+  const saveSupportNumber = async () => {
+    if (!selectedAppForSupport) return;
+    setSavingSupport(true);
+    try {
+      const res = await fetch("/api/admin/users/support-number", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selectedAppForSupport.user_id, customSupportNumber: supportNumberInput }),
+      });
+      if (res.ok) {
+        setApps(apps.map(a => a.id === selectedAppForSupport.id ? { ...a, custom_support_number: supportNumberInput } : a));
+        setShowSupportModal(false);
+        setSupportNumberInput("");
+        setSelectedAppForSupport(null);
+      } else {
+        alert("Failed to update support number");
+      }
+    } catch {
+      alert("Error saving support number");
+    } finally {
+      setSavingSupport(false);
+    }
+  };
+
+  const loadSupportNumbersAdmin = async () => {
+    try {
+      const res = await fetch("/api/admin/support-numbers");
+      if (res.ok) {
+        const data = await res.json();
+        setSupportNumbers(Array.isArray(data) ? data : []);
+      }
+    } catch {}
+  };
+
+  const addSupportNumber = async () => {
+    const number = newSupportNumber.trim();
+    const label = newSupportLabel.trim();
+    if (!number) return;
+    try {
+      const res = await fetch("/api/admin/support-numbers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ number, label }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSupportNumbers(Array.isArray(data) ? data : []);
+        setNewSupportNumber("");
+        setNewSupportLabel("");
+      }
+    } catch {}
+  };
+
+  const deleteSupportNumberAdmin = async (id: number) => {
+    try {
+      const res = await fetch("/api/admin/support-numbers", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSupportNumbers(Array.isArray(data) ? data : []);
+      }
+    } catch {}
   };
 
   const shareUrl = "http://localhost:3000/admin-ref/signup";
@@ -493,8 +588,9 @@ export default function AdminPage() {
                       </div>
                     </motion.div>
                   </div>
-                </motion.div>
-              )}
+ 
+                 </motion.div>
+               )}
 
               {/* APPLICATIONS TAB */}
               {activeTab === "applications" && (
@@ -582,6 +678,55 @@ export default function AdminPage() {
                       </div>
                     )}
                   </AnimatePresence>
+ 
+                  {/* Support Number Modal */}
+                  <AnimatePresence>
+                    {showSupportModal && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-sm w-full overflow-hidden"
+                        >
+                          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-slate-900">Set Support Number</h3>
+                            <button onClick={() => setShowSupportModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
+                              <X className="w-5 h-5" />
+                            </button>
+                          </div>
+                          <div className="p-6 space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">Select Support Number</label>
+                              <select
+                                value={supportNumberInput}
+                                onChange={e => setSupportNumberInput(e.target.value)}
+                                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all bg-white"
+                              >
+                                <option value="">Choose number...</option>
+                                {supportNumbers.map(sn => (
+                                  <option key={sn.id} value={sn.number}>{sn.number}{sn.label ? ` — ${sn.label}` : ""}</option>
+                                ))}
+                              </select>
+                              <p className="text-xs text-slate-500 mt-1">Numbers are managed by the super admin.</p>
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                              <button onClick={() => setShowSupportModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-colors">
+                                Cancel
+                              </button>
+                              <button 
+                                onClick={saveSupportNumber}
+                                disabled={savingSupport}
+                                className="px-6 py-2 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition-colors shadow-lg shadow-brand-500/20 disabled:opacity-50"
+                              >
+                                {savingSupport ? "Saving..." : "Save"}
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </div>
+                    )}
+                  </AnimatePresence>
                   
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -590,6 +735,7 @@ export default function AdminPage() {
                           <th className="px-6 py-4">ID</th>
                           <th className="px-6 py-4">Applicant Details</th>
                           <th className="px-6 py-4">Business Info</th>
+                          <th className="px-6 py-4">Support #</th>
                           <th className="px-6 py-4">Status</th>
                           <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
@@ -620,6 +766,14 @@ export default function AdminPage() {
                                   </div>
                                 )}
                               </div>
+                            </td>
+                            <td className="px-6 py-4">
+                               <button 
+                                 onClick={(e) => { e.stopPropagation(); openSupportModal(app); }}
+                                 className={`text-xs px-2 py-1 rounded-lg border transition-colors ${app.custom_support_number ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}
+                               >
+                                  {app.custom_support_number || "Set Number"}
+                               </button>
                             </td>
                             <td className="px-6 py-4">
                               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(app.status)}`}>
@@ -879,19 +1033,19 @@ export default function AdminPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {agentClients.map((client: any) => (
+                                        {agentClients.map((client: AdminClient) => (
                                             <tr key={client.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="px-6 py-3">
                                                     <div className="font-medium text-slate-900">{client.name}</div>
                                                     <div className="text-xs text-slate-500">{client.email}</div>
                                                 </td>
                                                 <td className="px-6 py-3">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(client.status)}`}>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(client.status || "Pending")}`}>
                                                         {client.status}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-3 text-right text-sm text-slate-500">
-                                                    {new Date(client.created_at).toLocaleDateString()}
+                                                    {new Date(client.created_at || Date.now()).toLocaleDateString()}
                                                 </td>
                                             </tr>
                                         ))}
@@ -917,6 +1071,97 @@ export default function AdminPage() {
                 </motion.div>
               )}
 
+              {activeTab === "settings" && (
+                <motion.div
+                  key="settings"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit={{ opacity: 0, y: -20 }}
+                  className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
+                >
+                  <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">Support Numbers</h2>
+                      <p className="text-slate-500 text-sm mt-1">Add numbers and labels for assignment by admins and agents.</p>
+                    </div>
+                    <button
+                      onClick={loadSupportNumbersAdmin}
+                      className="px-4 py-2 bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100 font-medium transition-colors border border-slate-200"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                  <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Number</label>
+                          <input
+                            type="text"
+                            value={newSupportNumber}
+                            onChange={e => setNewSupportNumber(e.target.value)}
+                            className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all"
+                            placeholder="123456789"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+                          <input
+                            type="text"
+                            value={newSupportLabel}
+                            onChange={e => setNewSupportLabel(e.target.value)}
+                            className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all"
+                            placeholder="Sales"
+                          />
+                        </div>
+                        <div className="flex justify-end">
+                          <button
+                            onClick={addSupportNumber}
+                            className="px-6 py-2 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition-colors shadow-lg shadow-brand-500/20"
+                          >
+                            Add
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="lg:col-span-2">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead className="bg-slate-50/50 text-slate-500 text-xs uppercase font-semibold tracking-wider border-b border-slate-100">
+                            <tr>
+                              <th className="px-6 py-4">Number</th>
+                              <th className="px-6 py-4">Label</th>
+                              <th className="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {supportNumbers.map(sn => (
+                              <tr key={sn.id} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-6 py-4 font-medium text-slate-900">{sn.number}</td>
+                                <td className="px-6 py-4 text-slate-600">{sn.label || "-"}</td>
+                                <td className="px-6 py-4 text-right">
+                                  <button
+                                    onClick={() => deleteSupportNumberAdmin(sn.id)}
+                                    className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg border border-red-200 hover:bg-red-100 text-sm"
+                                  >
+                                    Delete
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                            {supportNumbers.length === 0 && (
+                              <tr>
+                                <td colSpan={3} className="px-6 py-8 text-center text-slate-400">No support numbers yet</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
           )}
         </div>

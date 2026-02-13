@@ -20,7 +20,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       const [rows] = await conn.query(`
-        SELECT a.*, u.name, u.email, u.phone
+        SELECT a.*, u.name, u.email, u.phone, u.custom_support_number
         FROM applications a
         JOIN users u ON u.id = a.user_id
         ORDER BY a.created_at DESC

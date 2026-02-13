@@ -16,7 +16,7 @@ import {
   ChevronRight
 } from "lucide-react";
 
-type Section = "company" | "ownership" | "banking" | "documents" | "review";
+type Section = "company" | "processing" | "ownership" | "banking" | "documents" | "review";
 
 export default function ApplicationPage() {
   const router = useRouter();
@@ -27,8 +27,51 @@ export default function ApplicationPage() {
   const [tag, setTag] = useState<string | null>(null);
   const [editable, setEditable] = useState<boolean>(true);
 
-  const [company, setCompany] = useState({ legalName: "", dba: "", address: "" });
-  const [ownership, setOwnership] = useState({ ownerName: "", percent: 0 });
+  const [company, setCompany] = useState({ 
+    products: "", 
+    legalName: "", 
+    dba: "", 
+    email: "", 
+    phone: "", 
+    address1: "", 
+    address2: "", 
+    city: "", 
+    state: "", 
+    postal: "", 
+    bankAccount: "", 
+    bankRouting: "", 
+    incorporatedDate: "", 
+    taxId: "", 
+    website: "", 
+    websiteActive: false, 
+    websiteInactiveReason: "", 
+    customerSupportNumber: "", 
+    principalsCount: 1, 
+    businessStructure: "" 
+  });
+  const [processing, setProcessing] = useState({
+    billingModel: [] as string[],
+    acceptanceWays: [] as string[],
+    majorityType: "",
+    tmfMatch: false,
+    bankruptcy: false,
+    bankruptcyDetail: "",
+    monthlyVolume: "",
+    averageSale: "",
+    highestSale: ""
+  });
+  const [ownership, setOwnership] = useState({ 
+    owner1: {
+      firstName: "", lastName: "", percent: "", 
+      address1: "", address2: "", city: "", state: "", postal: "", 
+      email: "", phone: "", ssn: "", dob: "", dlNumber: "", dlState: ""
+    },
+    owner2: {
+      firstName: "", lastName: "", percent: "", 
+      address1: "", address2: "", city: "", state: "", postal: "", 
+      email: "", phone: "", ssn: "", dob: "", dlNumber: "", dlState: ""
+    }
+  });
   const [banking, setBanking] = useState({ bankName: "", routing: "", account: "" });
   const [uploading, setUploading] = useState(false);
   interface DocumentItem { id: number; doc_type: string; file_path: string; status: string }
@@ -129,9 +172,13 @@ export default function ApplicationPage() {
   useEffect(() => {
     if (editable) saveSection("banking", banking);
   }, [banking, editable]);
+  useEffect(() => {
+    if (editable) saveSection("processing", processing);
+  }, [processing, editable]);
 
   const navItems = [
-    { id: "company", label: "Company Info", icon: Building2 },
+    { id: "company", label: "Business Basics", icon: Building2 },
+    { id: "processing", label: "Processing Basics", icon: FileText },
     { id: "ownership", label: "Ownership", icon: Users },
     { id: "banking", label: "Banking", icon: Landmark },
     { id: "documents", label: "Documents", icon: FileText },
@@ -209,62 +256,459 @@ export default function ApplicationPage() {
                 {section === "company" && (
                   <div className="space-y-5">
                     <div className="group">
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Legal Name</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">What Type of Products or Services do you offer?</label>
                       <input 
-                        placeholder="e.g. Acme Corp LLC" 
+                        placeholder="Describe your products or services" 
                         disabled={!editable} 
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
-                        value={company.legalName} 
-                        onChange={(e)=>setCompany({...company, legalName:e.target.value})} 
+                        value={company.products} 
+                        onChange={(e)=>setCompany({...company, products:e.target.value})} 
                       />
                     </div>
-                    <div className="group">
-                      <label className="block text-sm font-medium text-slate-700 mb-2">DBA (Doing Business As)</label>
-                      <input 
-                        placeholder="e.g. Acme Solutions" 
-                        disabled={!editable} 
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
-                        value={company.dba} 
-                        onChange={(e)=>setCompany({...company, dba:e.target.value})} 
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Company Legal Name</label>
+                        <input 
+                          placeholder="e.g. Acme Corp LLC" 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.legalName} 
+                          onChange={(e)=>setCompany({...company, legalName:e.target.value})} 
+                        />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">DBA (Doing Business As)</label>
+                        <input 
+                          placeholder="e.g. Acme Solutions" 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.dba} 
+                          onChange={(e)=>setCompany({...company, dba:e.target.value})} 
+                        />
+                      </div>
                     </div>
-                    <div className="group">
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Business Address</label>
-                      <input 
-                        placeholder="123 Business St, Suite 100" 
-                        disabled={!editable} 
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
-                        value={company.address} 
-                        onChange={(e)=>setCompany({...company, address:e.target.value})} 
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Company Email</label>
+                        <input 
+                          placeholder="example@example.com" 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.email} 
+                          onChange={(e)=>setCompany({...company, email:e.target.value})} 
+                        />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Company Phone Number</label>
+                        <input 
+                          placeholder="(000) 000-0000" 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.phone} 
+                          onChange={(e)=>setCompany({...company, phone:e.target.value})} 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Street Address Line 1</label>
+                        <input 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.address1} 
+                          onChange={(e)=>setCompany({...company, address1:e.target.value})} 
+                        />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Street Address Line 2</label>
+                        <input 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.address2} 
+                          onChange={(e)=>setCompany({...company, address2:e.target.value})} 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">City</label>
+                        <input 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.city} 
+                          onChange={(e)=>setCompany({...company, city:e.target.value})} 
+                        />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">State / Province</label>
+                        <input 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.state} 
+                          onChange={(e)=>setCompany({...company, state:e.target.value})} 
+                        />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Postal / Zip Code</label>
+                        <input 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.postal} 
+                          onChange={(e)=>setCompany({...company, postal:e.target.value})} 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Business Bank Account #</label>
+                        <input 
+                          placeholder="ex: 23" 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.bankAccount} 
+                          onChange={(e)=>setCompany({...company, bankAccount:e.target.value})} 
+                        />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Business Bank Routing #</label>
+                        <input 
+                          placeholder="ex: 23" 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.bankRouting} 
+                          onChange={(e)=>setCompany({...company, bankRouting:e.target.value})} 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Date of Incorporated</label>
+                        <input 
+                          placeholder="MM-DD-YYYY" 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.incorporatedDate} 
+                          onChange={(e)=>setCompany({...company, incorporatedDate:e.target.value})} 
+                        />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Business Tax ID Number (EIN)</label>
+                        <input 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.taxId} 
+                          onChange={(e)=>setCompany({...company, taxId:e.target.value})} 
+                        />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Customer Support #</label>
+                        <input 
+                          placeholder="(000) 000-0000" 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.customerSupportNumber} 
+                          onChange={(e)=>setCompany({...company, customerSupportNumber:e.target.value})} 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Company Website URL</label>
+                        <input 
+                          placeholder="https://example.com" 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.website} 
+                          onChange={(e)=>setCompany({...company, website:e.target.value})} 
+                        />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Is the website active?</label>
+                        <div className="flex items-center gap-4">
+                          <button 
+                            type="button"
+                            disabled={!editable}
+                            onClick={()=>setCompany({...company, websiteActive:true})}
+                            className={`px-4 py-2 rounded-xl border ${company.websiteActive ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-gray-50 border-gray-200 text-slate-600'}`}
+                          >
+                            Yes
+                          </button>
+                          <button 
+                            type="button"
+                            disabled={!editable}
+                            onClick={()=>setCompany({...company, websiteActive:false})}
+                            className={`px-4 py-2 rounded-xl border ${!company.websiteActive ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-gray-50 border-gray-200 text-slate-600'}`}
+                          >
+                            No
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    {!company.websiteActive && (
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">If no, please tell why</label>
+                        <input 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.websiteInactiveReason} 
+                          onChange={(e)=>setCompany({...company, websiteInactiveReason:e.target.value})} 
+                        />
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Number of principals (Owners)</label>
+                        <input 
+                          type="number"
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.principalsCount} 
+                          onChange={(e)=>setCompany({...company, principalsCount:Number(e.target.value)})} 
+                        />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Business Structure</label>
+                        <input 
+                          placeholder="LLC, Corporation, Sole Proprietor, etc." 
+                          disabled={!editable} 
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                          value={company.businessStructure} 
+                          onChange={(e)=>setCompany({...company, businessStructure:e.target.value})} 
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {section === "ownership" && (
-                  <div className="space-y-5">
+                  <div className="space-y-8">
+                    <div className="space-y-5">
+                      <h3 className="text-lg font-semibold">Owner 1</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">First Name</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.firstName} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, firstName:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Last Name</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.lastName} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, lastName:e.target.value}})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Ownership %</label>
+                          <input type="number" disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.percent} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, percent:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.email} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, email:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.phone} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, phone:e.target.value}})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Street Address</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.address1} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, address1:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Street Address Line 2</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.address2} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, address2:e.target.value}})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">City</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.city} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, city:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">State / Province</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.state} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, state:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Postal / Zip Code</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.postal} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, postal:e.target.value}})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">SSN</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.ssn} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, ssn:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Date Of Birth</label>
+                          <input placeholder="MM-DD-YYYY" disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.dob} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, dob:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Driver’s License #</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.dlNumber} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, dlNumber:e.target.value}})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Driver’s License State</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner1.dlState} onChange={(e)=>setOwnership({...ownership, owner1:{...ownership.owner1, dlState:e.target.value}})} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-5">
+                      <h3 className="text-lg font-semibold">Owner 2</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">First Name</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.firstName} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, firstName:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Last Name</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.lastName} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, lastName:e.target.value}})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Ownership %</label>
+                          <input type="number" disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.percent} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, percent:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.email} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, email:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.phone} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, phone:e.target.value}})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Street Address</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.address1} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, address1:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Street Address Line 2</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.address2} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, address2:e.target.value}})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">City</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.city} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, city:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">State / Province</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.state} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, state:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Postal / Zip Code</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.postal} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, postal:e.target.value}})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">SSN</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.ssn} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, ssn:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Date Of Birth</label>
+                          <input placeholder="MM-DD-YYYY" disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.dob} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, dob:e.target.value}})} />
+                        </div>
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Driver’s License #</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.dlNumber} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, dlNumber:e.target.value}})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="group">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Driver’s License State</label>
+                          <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={ownership.owner2.dlState} onChange={(e)=>setOwnership({...ownership, owner2:{...ownership.owner2, dlState:e.target.value}})} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {section === "processing" && (
+                  <div className="space-y-6">
                     <div className="group">
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Owner Full Name</label>
-                      <input 
-                        placeholder="John Doe" 
-                        disabled={!editable} 
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
-                        value={ownership.ownerName} 
-                        onChange={(e)=>setOwnership({...ownership, ownerName:e.target.value})} 
-                      />
+                      <label className="block text-sm font-medium text-slate-700 mb-2">Billing Model (choose all that apply)</label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {["Subscription","One-time","Installments","Usage-based","Wholesale","Retail"].map(opt=>(
+                          <button 
+                            key={opt}
+                            type="button"
+                            disabled={!editable}
+                            onClick={()=>{
+                              const has = processing.billingModel.includes(opt);
+                              setProcessing({...processing, billingModel: has ? processing.billingModel.filter(o=>o!==opt) : [...processing.billingModel, opt]});
+                            }}
+                            className={`px-3 py-2 rounded-xl border text-sm ${processing.billingModel.includes(opt) ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-gray-50 border-gray-200 text-slate-600'}`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <div className="group">
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Ownership Percentage</label>
-                      <div className="relative">
-                        <input 
-                          type="number" 
-                          placeholder="50" 
-                          disabled={!editable} 
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60 pr-12"
-                          value={ownership.percent} 
-                          onChange={(e)=>setOwnership({...ownership, percent:Number(e.target.value)})} 
-                        />
-                        <span className="absolute right-4 top-3.5 text-slate-400 font-medium">%</span>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">I plan to accept payment the following ways</label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {["In Person","Online","By Phone","Invoices","Mobile","Other"].map(opt=>(
+                          <button 
+                            key={opt}
+                            type="button"
+                            disabled={!editable}
+                            onClick={()=>{
+                              const has = processing.acceptanceWays.includes(opt);
+                              setProcessing({...processing, acceptanceWays: has ? processing.acceptanceWays.filter(o=>o!==opt) : [...processing.acceptanceWays, opt]});
+                            }}
+                            className={`px-3 py-2 rounded-xl border text-sm ${processing.acceptanceWays.includes(opt) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-slate-600'}`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="group">
+                      <label className="block text-sm font-medium text-slate-700 mb-2">Based on your answer above, what will the majority type be?</label>
+                      <input 
+                        placeholder="e.g., 90% in person" 
+                        disabled={!editable} 
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60"
+                        value={processing.majorityType} 
+                        onChange={(e)=>setProcessing({...processing, majorityType:e.target.value})} 
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">TMF/MATCH list history</label>
+                        <div className="flex items-center gap-4">
+                          <button type="button" disabled={!editable} onClick={()=>setProcessing({...processing, tmfMatch:true})} className={`px-4 py-2 rounded-xl border ${processing.tmfMatch ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-gray-50 border-gray-200 text-slate-600'}`}>Yes</button>
+                          <button type="button" disabled={!editable} onClick={()=>setProcessing({...processing, tmfMatch:false})} className={`px-4 py-2 rounded-xl border ${!processing.tmfMatch ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-gray-50 border-gray-200 text-slate-600'}`}>No</button>
+                        </div>
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Bankruptcy history</label>
+                        <div className="flex items-center gap-4">
+                          <button type="button" disabled={!editable} onClick={()=>setProcessing({...processing, bankruptcy:true})} className={`px-4 py-2 rounded-xl border ${processing.bankruptcy ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-gray-50 border-gray-200 text-slate-600'}`}>Yes</button>
+                          <button type="button" disabled={!editable} onClick={()=>setProcessing({...processing, bankruptcy:false})} className={`px-4 py-2 rounded-xl border ${!processing.bankruptcy ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-gray-50 border-gray-200 text-slate-600'}`}>No</button>
+                        </div>
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">If yes, when and was it personal or business?</label>
+                        <input disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={processing.bankruptcyDetail} onChange={(e)=>setProcessing({...processing, bankruptcyDetail:e.target.value})} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Current/Expected monthly processing volume</label>
+                        <input placeholder="Ex: 10000" disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={processing.monthlyVolume} onChange={(e)=>setProcessing({...processing, monthlyVolume:e.target.value})} />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Average sale amount</label>
+                        <input placeholder="Ex: 10000" disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={processing.averageSale} onChange={(e)=>setProcessing({...processing, averageSale:e.target.value})} />
+                      </div>
+                      <div className="group">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Highest sale amount</label>
+                        <input placeholder="Ex: 10000" disabled={!editable} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none disabled:opacity-60" value={processing.highestSale} onChange={(e)=>setProcessing({...processing, highestSale:e.target.value})} />
                       </div>
                     </div>
                   </div>
@@ -311,7 +755,10 @@ export default function ApplicationPage() {
                       {[
                         { label: "Bank Statement", type: "bank_statement" },
                         { label: "Driver License", type: "driver_license" },
-                        { label: "Voided Check", type: "voided_check" }
+                        { label: "Voided Check", type: "voided_check" },
+                        { label: "Merchant/Processing Statement", type: "merchant_statement" },
+                        { label: "Government Issued ID", type: "government_id" },
+                        { label: "Additional Documents", type: "additional" }
                       ].map((doc) => (
                         <div key={doc.type} className="border border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer relative group">
                            <Upload className="w-8 h-8 text-blue-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />

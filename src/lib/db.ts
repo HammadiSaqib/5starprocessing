@@ -53,6 +53,7 @@ export interface UserRow extends RowDataPacket {
   role?: string;
   referral_slug?: string;
   referred_by?: number;
+  custom_support_number?: string | null;
 }
 
 export async function findUserByEmail(email: string) {
@@ -202,6 +203,27 @@ export async function ensurePortalSchema() {
         attempts INT NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+    const [merchantIdCol] = await conn.query<RowDataPacket[]>(
+      "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'applications' AND COLUMN_NAME = 'merchant_id'"
+    );
+    if (!merchantIdCol.length) {
+      await conn.query("ALTER TABLE applications ADD COLUMN merchant_id VARCHAR(64) NULL");
+    }
+    const [trackingIdCol] = await conn.query<RowDataPacket[]>(
+      "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'applications' AND COLUMN_NAME = 'tracking_id'"
+    );
+    if (!trackingIdCol.length) {
+      await conn.query("ALTER TABLE applications ADD COLUMN tracking_id VARCHAR(64) NULL");
+    }
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS support_numbers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        number VARCHAR(64) NOT NULL UNIQUE,
+        label VARCHAR(64) NULL,
+        active TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
     const [phoneCol] = await conn.query<RowDataPacket[]>(
@@ -451,6 +473,68 @@ export async function updateDocumentStatus(documentId: number, reviewerUserId: n
         await conn.query("UPDATE applications SET status = 'approved' WHERE id = ?", [appId]);
       }
     }
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function setApplicationApproval(applicationId: number, merchantId: string, trackingId: string, reviewerUserId: number) {
+  const conn = await getConnection();
+  try {
+    await conn.query(
+      "UPDATE applications SET merchant_id = ?, tracking_id = ?, status = 'approved' WHERE id = ?",
+      [merchantId, trackingId, applicationId]
+    );
+    const [appRows] = await conn.query<RowDataPacket[]>("SELECT user_id FROM applications WHERE id = ?", [applicationId]);
+    const userId = appRows[0]?.user_id as number | undefined;
+    if (userId) {
+      await conn.query(
+        "INSERT INTO notifications (user_id, application_id, type, reason, scheduled_at) VALUES (?, ?, 'email', 'approved', NOW())",
+        [userId, applicationId]
+      );
+    }
+    await conn.query(
+      "INSERT INTO document_audits (document_id, actor_user_id, action) VALUES (?, ?, 'approved')",
+      [0, reviewerUserId]
+    );
+  } finally {
+    await conn.end();
+  }
+}
+
+export interface SupportNumber extends RowDataPacket {
+  id: number;
+  number: string;
+  label?: string | null;
+  active: number;
+  created_at: string;
+}
+
+export async function listSupportNumbers(): Promise<SupportNumber[]> {
+  const conn = await getConnection();
+  try {
+    const [rows] = await conn.query<SupportNumber[]>("SELECT id, number, label, active, created_at FROM support_numbers WHERE active = 1 ORDER BY created_at DESC");
+    return rows;
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function createSupportNumber(number: string, label?: string) {
+  const conn = await getConnection();
+  try {
+    await conn.query("INSERT INTO support_numbers (number, label) VALUES (?, ?)", [number, label || null]);
+    return true;
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function deleteSupportNumber(id: number) {
+  const conn = await getConnection();
+  try {
+    await conn.query("DELETE FROM support_numbers WHERE id = ?", [id]);
+    return true;
   } finally {
     await conn.end();
   }

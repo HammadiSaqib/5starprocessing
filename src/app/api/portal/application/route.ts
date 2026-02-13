@@ -47,12 +47,12 @@ export async function GET(request: Request) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const app = await getApplicationStatusForUser(userId);
+    const app = await getApplicationStatusForUser(userId) as { id: number; status: string; tag?: string | null; merchant_id?: string | null; tracking_id?: string | null } | null;
     if (!app) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     const docs = await listDocumentsForApplication(app.id as number);
-    return NextResponse.json({ status: app.status, tag: app.tag, applicationId: app.id, documents: docs });
+    return NextResponse.json({ status: app.status, tag: app.tag, applicationId: app.id, merchantId: app.merchant_id || null, trackingId: app.tracking_id || null, documents: docs });
   } catch {
     return NextResponse.json({ error: "Status error" }, { status: 500 });
   }

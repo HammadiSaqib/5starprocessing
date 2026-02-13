@@ -14,14 +14,12 @@ import {
   ChevronRight,
   User,
   LogOut,
-  ShieldAlert,
   Clock,
   CheckCircle,
   Activity,
   UploadCloud,
   HelpCircle,
-  Mail,
-  Shield,
+  Phone,
 } from "lucide-react";
 
 const SidebarItem = ({ 
@@ -56,7 +54,8 @@ const SidebarItem = ({
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [me, setMe] = useState<{ status?: string; status_reason?: string; name?: string; email?: string } | null>(null);
+  const [me, setMe] = useState<{ status?: string; status_reason?: string; name?: string; email?: string; custom_support_number?: string | null } | null>(null);
+  const [appInfo, setAppInfo] = useState<{ status?: string; merchantId?: string | null; trackingId?: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -68,7 +67,8 @@ export default function DashboardPage() {
             status: data.status, 
             status_reason: data.status_reason,
             name: data.name || "Valued Client",
-            email: data.email || "client@example.com"
+            email: data.email || "client@example.com",
+            custom_support_number: data.custom_support_number
           });
         }
       } catch (e) {
@@ -76,9 +76,20 @@ export default function DashboardPage() {
       }
     })();
   }, []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/portal/application");
+        const data = await res.json();
+        if (res.ok) {
+          setAppInfo({ status: data.status, merchantId: data.merchantId, trackingId: data.trackingId });
+        }
+      } catch {}
+    })();
+  }, []);
 
-  const pending = me?.status === "Pending";
-  const possed = me?.status === "Possed";
+  // const pending = me?.status === "Pending";
+  // const possed = me?.status === "Possed";
 
   // Animation Variants
   const sidebarVariants = {
@@ -115,6 +126,16 @@ export default function DashboardPage() {
     { label: "Documents Uploaded", value: "4/5", icon: UploadCloud, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "Pending Actions", value: "1", icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
   ];
+
+  if (me?.custom_support_number) {
+    stats.push({
+      label: "Dedicated Support",
+      value: me.custom_support_number,
+      icon: Phone,
+      color: "text-blue-600",
+      bg: "bg-blue-50"
+    });
+  }
 
 
 
@@ -258,19 +279,48 @@ export default function DashboardPage() {
                       Your application is currently being processed. We&apos;ve updated your dashboard with the latest status and pending actions.
                     </p>
                     <div className="flex flex-wrap gap-4">
-                      <button className="px-6 py-3 bg-white text-brand-700 rounded-xl font-bold hover:bg-brand-50 transition-colors shadow-lg shadow-black/10 flex items-center gap-2">
-                        <Activity className="w-5 h-5" />
-                        View Status
-                      </button>
-                      <button className="px-6 py-3 bg-brand-700/50 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors border border-white/10 backdrop-blur-sm">
-                        Contact Support
-                      </button>
+                      <Link href="/portal/application" className="px-6 py-3 bg-white text-red-600 hover:text-red-700 rounded-xl font-bold hover:bg-brand-50 transition-colors shadow-lg shadow-black/10 flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-red-600" />
+                        Submit Quick App
+                      </Link>
+                      {appInfo?.status === "approved" && (
+                        <div className="px-6 py-3 bg-white/10 text-white rounded-xl font-semibold border border-white/20 backdrop-blur-sm flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-emerald-300" />
+                            <span>Approved</span>
+                          </div>
+                          {appInfo.merchantId && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-lg bg-white/10 border border-white/20 text-xs">
+                              MID: {appInfo.merchantId}
+                            </span>
+                          )}
+                          {appInfo.trackingId && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-lg bg-white/10 border border-white/20 text-xs">
+                              Tracking: {appInfo.trackingId}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {me?.custom_support_number ? (
+                        <a
+                          href={`tel:${me.custom_support_number}`}
+                          className="px-6 py-3 bg-brand-700/50 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors border border-white/10 backdrop-blur-sm flex items-center gap-2"
+                          title="Call your assigned support number"
+                        >
+                          <Phone className="w-5 h-5" />
+                          {me.custom_support_number}
+                        </a>
+                      ) : (
+                        <Link href="/portal/application" className="px-6 py-3 bg-brand-700/50 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors border border-white/10 backdrop-blur-sm">
+                          Submit Application
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </motion.div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${stats.length > 3 ? '4' : '3'} gap-6`}>
                   {stats.map((stat, i) => (
                     <motion.div 
                       key={i}
@@ -281,12 +331,14 @@ export default function DashboardPage() {
                         <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
                           <stat.icon className="w-6 h-6" />
                         </div>
-                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${stat.bg} ${stat.color}`}>
-                          +2.5%
-                        </span>
+                        {i < 3 && (
+                          <span className={`text-xs font-bold px-2 py-1 rounded-lg ${stat.bg} ${stat.color}`}>
+                            +2.5%
+                          </span>
+                        )}
                       </div>
                       <h3 className="text-slate-500 text-sm font-medium mb-1">{stat.label}</h3>
-                      <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                      <p className={`font-bold text-slate-900 ${String(stat.value).length > 15 ? 'text-lg' : 'text-2xl'}`}>{stat.value}</p>
                     </motion.div>
                   ))}
                 </div>
@@ -352,10 +404,26 @@ export default function DashboardPage() {
                     <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl shadow-lg p-6 text-white relative overflow-hidden">
                       <div className="relative z-10">
                         <h3 className="text-lg font-bold mb-2">Need Assistance?</h3>
-                        <p className="text-slate-300 text-sm mb-6">Our support team is available 24/7 to help you with any issues.</p>
-                        <button className="w-full py-3 bg-white text-slate-900 rounded-xl font-bold hover:bg-brand-50 transition-colors text-sm">
-                          Contact Support
-                        </button>
+                        <p className="text-slate-300 text-sm mb-6">
+                          {me?.custom_support_number 
+                            ? "Your dedicated support agent is available to help you with any issues." 
+                            : "Our support team is available 24/7 to help you with any issues."}
+                        </p>
+                        {me?.custom_support_number ? (
+                          <div className="space-y-3 text-slate-800">
+                            <a href={`tel:${me.custom_support_number}`} className="flex items-center justify-center gap-2 w-full py-3 bg-white text-slate-300 rounded-xl font-bold hover:bg-brand-50 transition-colors text-sm">
+                              <Phone className="w-4 h-4" />
+                              {me.custom_support_number}
+                            </a>
+                            <button className="w-full py-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-600 transition-colors text-sm border border-slate-600">
+                              Contact via Email
+                            </button>
+                          </div>
+                        ) : (
+                          <button className="w-full py-3 bg-white text-slate-900 rounded-xl font-bold hover:bg-brand-50 transition-colors text-sm">
+                            Contact Support
+                          </button>
+                        )}
                       </div>
                       <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
                     </div>
@@ -499,22 +567,7 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* GATING OVERLAYS */}
-      {/* Pending Overlay */}
-      <AnimatePresence>
-        {pending && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-xl">
-            {/* Overlay hidden intentionally */}
-          </div>
-        )}
-
-        {/* Possed (Paused) Overlay */}
-        {possed && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-xl">
-             {/* Overlay hidden intentionally */}
-          </div>
-        )}
-      </AnimatePresence>
+      {/* GATING OVERLAYS REMOVED */}
 
     </div>
   );

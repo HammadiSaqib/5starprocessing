@@ -54,6 +54,11 @@ export default function TeamUsersPage() {
   const [viewSubs, setViewSubs] = useState<{ userId: number; items: { application_id: number; updated_at: string; app_status: string; tag?: string | null }[] } | null>(null);
   const [viewSubmitDetail, setViewSubmitDetail] = useState<{ data?: Record<string, unknown> } | null>(null);
   const [viewProfile, setViewProfile] = useState<TeamUser | null>(null);
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [selectedUserForSupport, setSelectedUserForSupport] = useState<TeamUser | null>(null);
+  const [supportNumberInput, setSupportNumberInput] = useState("");
+  const [savingSupport, setSavingSupport] = useState(false);
+  const [supportNumbers, setSupportNumbers] = useState<{ id: number; number: string; label?: string | null }[]>([]);
 
   // Invite System State
   const [mySlug, setMySlug] = useState<string>("");
@@ -109,6 +114,17 @@ export default function TeamUsersPage() {
       }
     })();
   }, []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/support-numbers");
+        if (res.ok) {
+          const data = await res.json();
+          setSupportNumbers(Array.isArray(data) ? data : []);
+        }
+      } catch {}
+    })();
+  }, [showSupportModal]);
 
   // Update QR code when slug/origin changes
   useEffect(() => {
@@ -181,6 +197,37 @@ export default function TeamUsersPage() {
         }
     } catch (e) {
         console.error("Share failed", e);
+    }
+  }
+
+  function openAssignSupport(user: TeamUser) {
+    setSelectedUserForSupport(user);
+    setSupportNumberInput("");
+    setShowSupportModal(true);
+    setMenuOpenFor(null);
+  }
+
+  async function saveSupportNumberForUser() {
+    if (!selectedUserForSupport) return;
+    setSavingSupport(true);
+    try {
+      const res = await fetch("/api/admin/users/support-number", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selectedUserForSupport.id, customSupportNumber: supportNumberInput }),
+      });
+      if (res.ok) {
+        setShowSupportModal(false);
+        setSelectedUserForSupport(null);
+        setSupportNumberInput("");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to assign support number");
+      }
+    } catch {
+      setError("Failed to assign support number");
+    } finally {
+      setSavingSupport(false);
     }
   }
 
@@ -653,6 +700,7 @@ export default function TeamUsersPage() {
                             <button onClick={() => openStatus(user)} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">Edit Status</button>
                             <button onClick={() => openSubmissions(user.id)} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">View Submissions</button>
                             <button onClick={() => openUserProfile(user)} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">View Profile</button>
+                            <button onClick={() => openAssignSupport(user)} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">Assign Support Number</button>
                           </div>
                         )}
                       </div>
@@ -706,6 +754,36 @@ export default function TeamUsersPage() {
                 <div className="flex justify-end gap-2 pt-2">
                   <button onClick={() => setStatusModal(null)} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
                   <button onClick={saveStatus} className="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 shadow-lg shadow-brand-600/20">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Support Number Modal */}
+        {showSupportModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-sm w-full p-6">
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Assign Support Number</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Select Support Number</label>
+                  <select
+                    value={supportNumberInput}
+                    onChange={(e) => setSupportNumberInput(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+                  >
+                    <option value="">Choose number...</option>
+                    {supportNumbers.map(sn => (
+                      <option key={sn.id} value={sn.number}>{sn.number}{sn.label ? ` — ${sn.label}` : ""}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button onClick={() => setShowSupportModal(false)} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+                  <button onClick={saveSupportNumberForUser} disabled={savingSupport} className="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 shadow-lg shadow-brand-600/20 disabled:opacity-50">
+                    {savingSupport ? "Saving..." : "Save"}
+                  </button>
                 </div>
               </div>
             </div>

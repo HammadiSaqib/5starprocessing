@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, FileText, Info, Save, XCircle } from "lucide-react";
+import { FileText, Info, Save, XCircle } from "lucide-react";
 
 interface SubRow {
   application_id: number;
@@ -35,7 +35,7 @@ export default function TeamSubmintsPage() {
   const [error, setError] = useState<string | null>(null);
   const [viewPrequal, setViewPrequal] = useState<PrequalDetail | null>(null);
   const [viewSubmit, setViewSubmit] = useState<SubmitDetail | null>(null);
-  const [statusModal, setStatusModal] = useState<{ userId: number; status: string; reason?: string } | null>(null);
+  const [statusModal, setStatusModal] = useState<{ userId: number; applicationId: number; status: string; reason?: string; merchantId?: string; trackingId?: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -62,13 +62,26 @@ export default function TeamSubmintsPage() {
     if (res.ok) setViewSubmit(data);
   }
 
-  function openStatus(userId: number, current: string | undefined, reason?: string | null) {
-    setStatusModal({ userId, status: (current ?? "Pending"), reason: (reason ?? "") });
+  function openStatus(userId: number, applicationId: number, current: string | undefined, reason?: string | null) {
+    setStatusModal({ userId, applicationId, status: (current ?? "Pending"), reason: (reason ?? ""), merchantId: "", trackingId: "" });
   }
 
   async function saveStatus() {
     if (!statusModal) return;
     const normalized = statusModal.status === "Currently Posed" ? "Possed" : statusModal.status;
+    if (normalized === "Approved") {
+      const mid = (statusModal.merchantId || "").trim();
+      const tid = (statusModal.trackingId || "").trim();
+      if (!mid || !tid) {
+        return;
+      }
+      const resApprove = await fetch(`/api/team/application/${statusModal.applicationId}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchantId: mid, trackingId: tid }),
+      });
+      if (!resApprove.ok) return;
+    }
     const res = await fetch("/api/team/user-status", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -136,7 +149,7 @@ export default function TeamSubmintsPage() {
                       <button onClick={() => openSubmit(r.application_id)} className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="View Submit Data">
                         <FileText className="w-4 h-4" />
                       </button>
-                      <button onClick={() => openStatus(r.user_id, r.user_status, r.status_reason)} className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Change Status">
+                      <button onClick={() => openStatus(r.user_id, r.application_id, r.user_status, r.status_reason)} className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Change Status">
                         <Save className="w-4 h-4" />
                       </button>
                     </div>
@@ -297,6 +310,30 @@ export default function TeamSubmintsPage() {
                   <option value="Currently Posed">Currently Posed</option>
                 </select>
               </div>
+              {statusModal.status === "Approved" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">MID (Merchant ID)</label>
+                    <input
+                      type="text"
+                      value={statusModal.merchantId || ""}
+                      onChange={(e) => setStatusModal({ ...statusModal, merchantId: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+                      placeholder="Enter MID"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Tracking ID</label>
+                    <input
+                      type="text"
+                      value={statusModal.trackingId || ""}
+                      onChange={(e) => setStatusModal({ ...statusModal, trackingId: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+                      placeholder="Enter Tracking ID"
+                    />
+                  </div>
+                </>
+              )}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Reason (Optional)</label>
                 <input
