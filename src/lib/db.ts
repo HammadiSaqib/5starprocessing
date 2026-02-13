@@ -474,54 +474,70 @@ export async function deleteCourse(id: number) {
 }
 
 export async function getApplicationTheme() {
-  await ensurePortalSchema();
-  const conn = await getConnection();
   try {
-    interface ThemeRow extends RowDataPacket {
-      ["brand-50"]: string;
-      ["brand-100"]: string;
-      ["brand-200"]: string;
-      ["brand-300"]: string;
-      ["brand-400"]: string;
-      ["brand-500"]: string;
-      ["brand-600"]: string;
-      ["brand-700"]: string;
-      ["brand-800"]: string;
-      ["brand-900"]: string;
-      ["brand-950"]: string;
-    }
-    const [rows] = await conn.query<ThemeRow[]>("SELECT `brand-50`, `brand-100`, `brand-200`, `brand-300`, `brand-400`, `brand-500`, `brand-600`, `brand-700`, `brand-800`, `brand-900`, `brand-950` FROM application_them LIMIT 1");
-    const r = rows[0] || null;
-    if (!r) {
+    await ensurePortalSchema();
+    const conn = await getConnection();
+    try {
+      interface ThemeRow extends RowDataPacket {
+        ["brand-50"]: string;
+        ["brand-100"]: string;
+        ["brand-200"]: string;
+        ["brand-300"]: string;
+        ["brand-400"]: string;
+        ["brand-500"]: string;
+        ["brand-600"]: string;
+        ["brand-700"]: string;
+        ["brand-800"]: string;
+        ["brand-900"]: string;
+        ["brand-950"]: string;
+      }
+      const [rows] = await conn.query<ThemeRow[]>("SELECT `brand-50`, `brand-100`, `brand-200`, `brand-300`, `brand-400`, `brand-500`, `brand-600`, `brand-700`, `brand-800`, `brand-900`, `brand-950` FROM application_them LIMIT 1");
+      const r = rows[0] || null;
+      if (!r) {
+        return {
+          50: "#fef2f2",
+          100: "#fee2e2",
+          200: "#fecaca",
+          300: "#fca5a5",
+          400: "#f87171",
+          500: "#ef4444",
+          600: "#dc2626",
+          700: "#b91c1c",
+          800: "#991b1b",
+          900: "#7f1d1d",
+          950: "#450a0a",
+        };
+      }
       return {
-        50: "#fef2f2",
-        100: "#fee2e2",
-        200: "#fecaca",
-        300: "#fca5a5",
-        400: "#f87171",
-        500: "#ef4444",
-        600: "#dc2626",
-        700: "#b91c1c",
-        800: "#991b1b",
-        900: "#7f1d1d",
-        950: "#450a0a",
+        50: String(r["brand-50"]),
+        100: String(r["brand-100"]),
+        200: String(r["brand-200"]),
+        300: String(r["brand-300"]),
+        400: String(r["brand-400"]),
+        500: String(r["brand-500"]),
+        600: String(r["brand-600"]),
+        700: String(r["brand-700"]),
+        800: String(r["brand-800"]),
+        900: String(r["brand-900"]),
+        950: String(r["brand-950"]),
       };
+    } finally {
+      await conn.end();
     }
+  } catch {
     return {
-      50: String(r["brand-50"]),
-      100: String(r["brand-100"]),
-      200: String(r["brand-200"]),
-      300: String(r["brand-300"]),
-      400: String(r["brand-400"]),
-      500: String(r["brand-500"]),
-      600: String(r["brand-600"]),
-      700: String(r["brand-700"]),
-      800: String(r["brand-800"]),
-      900: String(r["brand-900"]),
-      950: String(r["brand-950"]),
+      50: "#fef2f2",
+      100: "#fee2e2",
+      200: "#fecaca",
+      300: "#fca5a5",
+      400: "#f87171",
+      500: "#ef4444",
+      600: "#dc2626",
+      700: "#b91c1c",
+      800: "#991b1b",
+      900: "#7f1d1d",
+      950: "#450a0a",
     };
-  } finally {
-    await conn.end();
   }
 }
 
