@@ -418,7 +418,15 @@ export async function createCourse(course: Omit<Course, 'id' | 'created_at' | 'u
   }
 }
 
-export async function updateCourse(id: number, course: Partial<Course>, videos?: { id?: number, title: string, video_url: string, position: number }[]) {
+export type CourseUpdate = {
+  title?: string;
+  description?: string;
+  course_url?: string | null;
+  thumbnail_url?: string | null;
+  product_file_url?: string | null;
+};
+
+export async function updateCourse(id: number, course: CourseUpdate, videos?: { id?: number, title: string, video_url: string, position: number }[]) {
   const conn = await getConnection();
   try {
     await conn.query(
