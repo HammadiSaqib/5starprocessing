@@ -3,8 +3,8 @@ import mysql, { RowDataPacket, ResultSetHeader } from "mysql2/promise";
 const config = {
   host: process.env.MYSQL_HOST || process.env.DB_HOST || "127.0.0.1",
   port: Number(process.env.MYSQL_PORT || process.env.DB_PORT || 3306),
-  user: process.env.MYSQL_USER || process.env.DB_USER || "root",
-  password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || "",
+  user: process.env.MYSQL_USER || process.env.DB_USER || "fivestar_app",
+  password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || "STRONG_APP_PASSWORD",
   database: process.env.MYSQL_DATABASE || process.env.DB_DATABASE || "5starprocessing_db",
   waitForConnections: true,
   connectionLimit: 10,
