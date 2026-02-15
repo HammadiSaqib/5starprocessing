@@ -1,11 +1,11 @@
 import mysql, { RowDataPacket, ResultSetHeader } from "mysql2/promise";
 
 const config = {
-  host: process.env.MYSQL_HOST || "127.0.0.1",
-  port: Number(process.env.MYSQL_PORT || 3306),
-  user: process.env.MYSQL_USER || "root",
-  password: process.env.MYSQL_PASSWORD || "",
-  database: process.env.MYSQL_DATABASE || "5starprocessing_db",
+  host: process.env.MYSQL_HOST || process.env.DB_HOST || "127.0.0.1",
+  port: Number(process.env.MYSQL_PORT || process.env.DB_PORT || 3306),
+  user: process.env.MYSQL_USER || process.env.DB_USER || "root",
+  password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || "",
+  database: process.env.MYSQL_DATABASE || process.env.DB_DATABASE || "5starprocessing_db",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -16,6 +16,9 @@ console.log(
 );
 
 async function getConnection() {
+  if (process.env.NODE_ENV === "production" && config.user === "root" && !config.password) {
+    throw new Error("DB config invalid: root without password in production");
+  }
   return mysql.createConnection({
     host: config.host,
     port: config.port,
