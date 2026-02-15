@@ -40,10 +40,12 @@ export async function POST(request: Request) {
     const token = await signToken({ sub: userId, email, role: "applicant", appStatus: "prequal" });
 
     const res = NextResponse.json({ id: userId, name, email }, { status: 201 });
+    const xfProto = request.headers.get("x-forwarded-proto") || "";
+    const secureFlag = process.env.NODE_ENV === "production" && xfProto === "https";
     res.cookies.set("session", token, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: secureFlag,
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });
