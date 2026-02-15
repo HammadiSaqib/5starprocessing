@@ -79,6 +79,13 @@ export default function DashboardSidebar({
   const router = useRouter();
   const pathname = usePathname();
   const [showAffiliateModal, setShowAffiliateModal] = useState(false);
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } finally {
+      router.replace("/login");
+    }
+  };
 
   const go = (path: string) => () => router.push(path);
   
@@ -269,14 +276,14 @@ export default function DashboardSidebar({
               </div>
             </div>
           )}
-          <Link
-            href="/api/auth/logout"
+          <button
+            onClick={handleLogout}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors font-medium ${isCollapsed ? 'justify-center px-2' : ''}`}
             title={isCollapsed ? "Sign Out" : undefined}
           >
             <LogOut className="w-5 h-5" />
             {!isCollapsed && <span>Sign Out</span>}
-          </Link>
+          </button>
         </div>
       </div>
     </div>

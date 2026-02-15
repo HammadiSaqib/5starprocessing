@@ -18,7 +18,7 @@ import {
   UserCheck,
   Shield
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AdminSidebar from "@/app/admin/_components/AdminSidebar";
 
 interface AdminAgent { id: number; name: string; email: string; phone?: string | null; status?: string; role?: string; referral_count?: number; created_at?: string; }
@@ -40,6 +40,7 @@ export default function AgentManagementPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const pathname = usePathname();
+  const router = useRouter();
 
   const [showAgentModal, setShowAgentModal] = useState(false);
   const [newAgent, setNewAgent] = useState({ name: "", email: "", password: "", phone: "", role: "team" });
@@ -85,6 +86,27 @@ export default function AgentManagementPage() {
   const handleAgentClick = (agent: AdminAgent) => {
     setSelectedAgent(agent);
     fetchAgentClients(agent.id);
+  };
+
+  const handleOpenClientDashboard = async (clientId: number) => {
+    try {
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userId: clientId }),
+      });
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const next = String((data as { next?: string }).next || "/dashboard");
+        router.replace(next);
+      } else {
+        const data = await res.json().catch(() => ({ error: "Failed to open client" }));
+        alert(data.error || "Failed to open client");
+      }
+    } catch {
+      alert("Failed to open client");
+    }
   };
 
   const handleAddAgent = async (e: React.FormEvent) => {
@@ -532,7 +554,7 @@ export default function AgentManagementPage() {
                   
                   <div className="space-y-3">
                     {agentClients.map(client => (
-                      <div key={client.id} className="p-4 rounded-xl border border-slate-100 hover:border-brand-200 hover:bg-brand-50/30 transition-all flex items-center justify-between group">
+                      <div key={client.id} className="p-4 rounded-xl border border-slate-100 hover:border-brand-200 hover:bg-brand-50/30 transition-all flex items-center justify-between gap-4 group">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs">
                             {client.name.charAt(0)}
@@ -542,9 +564,17 @@ export default function AgentManagementPage() {
                             <p className="text-xs text-slate-500">{client.email}</p>
                           </div>
                         </div>
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusColor(client.status || "")}`}>
-                          {client.status || "Pending"}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusColor(client.status || "")}`}>
+                            {client.status || "Pending"}
+                          </span>
+                          <button
+                            onClick={() => handleOpenClientDashboard(client.id)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors"
+                          >
+                            Open Dashboard
+                          </button>
+                        </div>
                       </div>
                     ))}
                     {agentClients.length === 0 && (

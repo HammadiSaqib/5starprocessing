@@ -46,8 +46,12 @@ export async function POST(request: Request) {
 
     const token = await signToken({ sub: user.id, email, role, appStatus });
     const res = NextResponse.json({ id: user.id, name: user.name, email, role, appStatus, next }, { status: 200 });
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const host = forwardedHost || request.headers.get("host") || "";
+    const isLocalHost = host.includes("localhost") || host.includes("127.0.0.1") || host.includes("0.0.0.0");
     const xfProto = request.headers.get("x-forwarded-proto") || "";
-    const secureFlag = process.env.NODE_ENV === "production" && xfProto === "https";
+    const isHttps = xfProto === "https" || request.url.startsWith("https://");
+    const secureFlag = process.env.NODE_ENV === "production" && isHttps && !isLocalHost;
     res.cookies.set("session", token, {
       httpOnly: true,
       sameSite: "lax",

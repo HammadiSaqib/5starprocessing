@@ -38,10 +38,16 @@
  
     const token = await signToken({ sub: userId, email, role: "applicant" });
     const res = NextResponse.json({ id: userId, next: "/dashboard" }, { status: 201 });
+   const forwardedHost = request.headers.get("x-forwarded-host");
+   const host = forwardedHost || request.headers.get("host") || "";
+   const isLocalHost = host.includes("localhost") || host.includes("127.0.0.1") || host.includes("0.0.0.0");
+   const xfProto = request.headers.get("x-forwarded-proto") || "";
+   const isHttps = xfProto === "https" || request.url.startsWith("https://");
+   const secureFlag = process.env.NODE_ENV === "production" && isHttps && !isLocalHost;
      res.cookies.set("session", token, {
        httpOnly: true,
        sameSite: "lax",
-       secure: process.env.NODE_ENV === "production",
+      secure: secureFlag,
        path: "/",
        maxAge: 60 * 60 * 24 * 7,
      });

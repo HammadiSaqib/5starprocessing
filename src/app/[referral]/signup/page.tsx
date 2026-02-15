@@ -73,6 +73,7 @@ export default function ReferralSignupPage() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name, email, password, referral_slug: referralSlug }),
       });
       

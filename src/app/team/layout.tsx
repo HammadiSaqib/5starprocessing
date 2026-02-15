@@ -1,11 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Users, FileText, Settings, LogOut } from "lucide-react";
 
 export default function TeamLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } finally {
+      router.replace("/login");
+    }
+  };
 
   const navItems = [
     { href: "/team", label: "Overview", icon: LayoutDashboard },
@@ -54,13 +62,13 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
         </nav>
 
         <div className="p-4 mt-auto">
-          <Link 
-            href="/api/auth/logout" 
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group"
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group"
           >
             <LogOut className="w-5 h-5 group-hover:text-red-500 transition-colors" />
             <span className="font-medium">Sign Out</span>
-          </Link>
+          </button>
           <div className="mt-4 px-4 text-xs text-slate-400 text-center">
             &copy; 2025 5 Star Processing
           </div>

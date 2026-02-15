@@ -11,12 +11,21 @@ const config = {
   queueLimit: 0,
 } as const;
 
-console.log(
-  `DB connection host=${config.host} port=${config.port} user=${config.user} db=${config.database}`
-);
+if (process.env.NODE_ENV !== "production") {
+  console.log(
+    `DB connection host=${config.host} port=${config.port} user=${config.user} db=${config.database}`
+  );
+}
 
 async function getConnection() {
-  if (process.env.NODE_ENV === "production" && config.user === "root" && !config.password) {
+  const allowInsecureLocal = process.env.ALLOW_INSECURE_DB === "true";
+  const isLocalHost = config.host === "localhost" || config.host === "127.0.0.1";
+  if (
+    process.env.NODE_ENV === "production" &&
+    config.user === "root" &&
+    !config.password &&
+    !(allowInsecureLocal && isLocalHost)
+  ) {
     throw new Error("DB config invalid: root without password in production");
   }
   return mysql.createConnection({

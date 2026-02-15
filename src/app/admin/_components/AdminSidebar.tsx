@@ -1,11 +1,19 @@
  "use client";
  
- import Link from "next/link";
- import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
  import { LayoutDashboard, Users, FileText, Settings, LogOut, Handshake, GraduationCap } from "lucide-react";
 
 export default function AdminSidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } finally {
+      router.replace("/login");
+    }
+  };
   const nav = [
     { href: "/admin/overview", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/applications", label: "Applications", icon: FileText },
@@ -62,13 +70,13 @@ export default function AdminSidebar({ sidebarOpen }: { sidebarOpen: boolean }) 
                <p className="text-xs text-slate-500 truncate">admin@5star.com</p>
              </div>
            </div>
-           <Link
-             href="/api/auth/logout"
-             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
-           >
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
+          >
              <LogOut className="w-5 h-5" />
              <span>Sign Out</span>
-           </Link>
+          </button>
          </div>
        </div>
      </aside>

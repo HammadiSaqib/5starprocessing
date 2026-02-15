@@ -10,6 +10,7 @@ import { ChevronRight, User, Clock, CheckCircle, Activity, UploadCloud, HelpCirc
 export default function DashboardPage() {
   const [me, setMe] = useState<{ status?: string; status_reason?: string; name?: string; email?: string; custom_support_number?: string | null } | null>(null);
   const [appInfo, setAppInfo] = useState<{ status?: string; merchantId?: string | null; trackingId?: string | null } | null>(null);
+  const [impersonating, setImpersonating] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -42,9 +43,33 @@ export default function DashboardPage() {
       } catch {}
     })();
   }, []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/impersonate/status");
+        const data = await res.json();
+        setImpersonating(Boolean(data?.impersonating));
+      } catch {
+        setImpersonating(false);
+      }
+    })();
+  }, []);
 
   // const pending = me?.status === "Pending";
   // const possed = me?.status === "Possed";
+  const supportNumber = String(me?.custom_support_number || "").trim();
+  const hasSupportNumber = Boolean(supportNumber);
+
+  const stopImpersonation = async () => {
+    try {
+      const res = await fetch("/api/admin/impersonate/stop", { method: "POST", credentials: "include" });
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const next = String((data as { next?: string }).next || "/admin/applications");
+        router.replace(next);
+      }
+    } catch {}
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -90,6 +115,14 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
+            {impersonating && (
+              <div className="mb-6 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex flex-wrap items-center justify-between gap-3">
+                <span className="font-semibold">Viewing as admin</span>
+                <button onClick={stopImpersonation} className="px-4 py-2 rounded-xl bg-amber-600 text-white font-semibold hover:bg-amber-700 transition-colors">
+                  Back to Admin Dashboard
+                </button>
+              </div>
+            )}
           
             {/* OVERVIEW */}
               <motion.div
@@ -111,9 +144,9 @@ export default function DashboardPage() {
                       Your application is currently being processed. We&apos;ve updated your dashboard with the latest status and pending actions.
                     </p>
                     <div className="flex flex-wrap gap-4">
-                      <button onClick={() => { router.push("/dashboard/applications"); }} className="px-6 py-3 bg-white  text-brand-600  hover:text-brand-700 rounded-xl font-bold hover:bg-brand-50 transition-colors shadow-lg shadow-black/10 flex items-center gap-2">
+                      <button onClick={() => { router.push("/dashboard/applications"); }} className="px-6 py-3 bg-white text-brand-600 hover:text-brand-700 rounded-xl font-bold hover:bg-brand-50 transition-colors shadow-lg shadow-black/10 flex items-center gap-2">
                         <Activity className="w-5 h-5 text-brand-600" />
-                        Submit Quick App
+                        Submit Application
                       </button>
                       {appInfo?.status === "approved" && (
                         <div className="px-6 py-3 bg-white/10 text-white rounded-xl font-semibold border border-white/20 backdrop-blur-sm flex items-center gap-3">
@@ -133,19 +166,15 @@ export default function DashboardPage() {
                           )}
                         </div>
                       )}
-                      {me?.custom_support_number ? (
+                      {hasSupportNumber && (
                         <a
-                          href={`tel:${me.custom_support_number}`}
+                          href={`tel:${supportNumber}`}
                           className="px-6 py-3 bg-brand-700/50 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors border border-white/10 backdrop-blur-sm flex items-center gap-2"
                           title="Call your assigned support number"
                         >
                           <Phone className="w-5 h-5" />
-                          {me.custom_support_number}
+                          Call Support · {supportNumber}
                         </a>
-                      ) : (
-                        <button onClick={() => { router.push("/dashboard/applications"); }} className="px-6 py-3 bg-brand-700/50 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors border border-white/10 backdrop-blur-sm">
-                          Submit Application
-                        </button>
                       )}
                     </div>
                   </div>

@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { decodeJwt } from "jose";
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get("session")?.value || "";
-  const payload = token ? await verifyToken(token) as { role?: string } : null;
-  const valid = payload;
+  let payload: { role?: string } | null = null;
+  if (token) {
+    try {
+      payload = decodeJwt(token) as { role?: string };
+    } catch {
+      payload = null;
+    }
+  }
+  const valid = Boolean(token);
   const role = payload?.role;
-
   if (pathname.startsWith("/dashboard")) {
     if (!valid) {
       const loginUrl = new URL("/login", req.url);
@@ -48,7 +54,6 @@ export async function proxy(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
   }
-
   return NextResponse.next();
 }
 

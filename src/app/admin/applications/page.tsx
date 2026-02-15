@@ -25,7 +25,7 @@ import {
   Check,
   TrendingUp
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AdminSidebar from "@/app/admin/_components/AdminSidebar";
 
 interface AdminApp {
@@ -63,6 +63,7 @@ export default function AdminApplicationsPage() {
   const [supportNumbers, setSupportNumbers] = useState<{ id: number; number: string; label?: string | null }[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     (async () => {
@@ -136,6 +137,27 @@ export default function AdminApplicationsPage() {
       alert("Error saving support number");
     } finally {
       setSavingSupport(false);
+    }
+  };
+
+  const handleOpenClientDashboard = async (userId: number) => {
+    try {
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userId }),
+      });
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const next = String((data as { next?: string }).next || "/dashboard");
+        router.replace(next);
+      } else {
+        const data = await res.json().catch(() => ({ error: "Failed to open client" }));
+        alert(data.error || "Failed to open client");
+      }
+    } catch {
+      alert("Failed to open client");
     }
   };
 
@@ -329,6 +351,7 @@ export default function AdminApplicationsPage() {
                         <th className="px-6 py-4">Date</th>
                         <th className="px-6 py-4">Status</th>
                         <th className="px-6 py-4 text-right">Support #</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -381,11 +404,19 @@ export default function AdminApplicationsPage() {
                               </button>
                             )}
                           </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              onClick={() => handleOpenClientDashboard(app.user_id)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors"
+                            >
+                              Open Dashboard
+                            </button>
+                          </td>
                         </tr>
                       ))}
                       {filteredApps.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                          <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
                             <div className="flex flex-col items-center gap-3">
                               <Search className="w-8 h-8 opacity-20" />
                               <p>No applications found matching your search.</p>
