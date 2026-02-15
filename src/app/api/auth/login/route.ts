@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { findUserByEmail, ensurePortalSchema } from "@/lib/db";
+import { findUserByEmail, ensurePortalSchema, getApplicationStatusForUser, getOrCreateApplication } from "@/lib/db";
 import { comparePassword } from "@/lib/auth";
 import { signToken } from "@/lib/jwt";
 
@@ -26,8 +26,26 @@ export async function POST(request: Request) {
     }
     await ensurePortalSchema();
 
-    const token = await signToken({ sub: user.id, email, role: user.role || "applicant" });
-    const res = NextResponse.json({ id: user.id, name: user.name, email, role: user.role || "applicant" }, { status: 200 });
+    const role = user.role || "applicant";
+    let appStatus = "prequal";
+    let next = "/portal/prequal";
+    if (role === "admin") {
+      next = "/admin";
+    } else if (role === "team") {
+      next = "/team";
+    } else {
+      const existing = await getApplicationStatusForUser(user.id);
+      if (!existing) {
+        const app = await getOrCreateApplication(user.id);
+        appStatus = String(app.status || "prequal");
+      } else {
+        appStatus = String(existing.status || "prequal");
+      }
+      next = "/dashboard";
+    }
+
+    const token = await signToken({ sub: user.id, email, role, appStatus });
+    const res = NextResponse.json({ id: user.id, name: user.name, email, role, appStatus, next }, { status: 200 });
     res.cookies.set("session", token, {
       httpOnly: true,
       sameSite: "lax",

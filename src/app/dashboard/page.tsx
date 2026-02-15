@@ -111,8 +111,8 @@ export default function DashboardPage() {
                       Your application is currently being processed. We&apos;ve updated your dashboard with the latest status and pending actions.
                     </p>
                     <div className="flex flex-wrap gap-4">
-                      <button onClick={() => { router.push("/dashboard/applications"); }} className="px-6 py-3 bg-white !text-red-600 hover:text-red-700 rounded-xl font-bold hover:bg-brand-50 transition-colors shadow-lg shadow-black/10 flex items-center gap-2">
-                        <Activity className="w-5 h-5" color="#dc2626" />
+                      <button onClick={() => { router.push("/dashboard/applications"); }} className="px-6 py-3 bg-white  text-brand-600  hover:text-brand-700 rounded-xl font-bold hover:bg-brand-50 transition-colors shadow-lg shadow-black/10 flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-brand-600" />
                         Submit Quick App
                       </button>
                       {appInfo?.status === "approved" && (

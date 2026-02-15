@@ -658,7 +658,7 @@ export async function setVideoProgress(userId: number, videoId: string, percent:
     );
     if (completed) {
       await conn.query(
-        "UPDATE applications SET status = 'application' WHERE user_id = ? AND tag <> 'Disqualified' AND status = 'video'",
+        "UPDATE applications SET status = 'application' WHERE user_id = ? AND tag <> 'Disqualified' AND status IN ('video','prequal')",
         [userId]
       );
     }

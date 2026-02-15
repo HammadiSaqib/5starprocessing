@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureUsersTable, ensurePortalSchema, findUserByEmail, createUser, findUserByReferralSlug } from "@/lib/db";
+import { ensureUsersTable, ensurePortalSchema, findUserByEmail, createUser, findUserByReferralSlug, getOrCreateApplication } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
 import { signToken } from "@/lib/jwt";
 
@@ -36,7 +36,8 @@ export async function POST(request: Request) {
     const passwordHash = await hashPassword(password);
     // Note: We don't generate a referral slug for applicants by default, only for agents
     const userId = await createUser(name, email, passwordHash, undefined, referredBy);
-    const token = await signToken({ sub: userId, email });
+    await getOrCreateApplication(userId);
+    const token = await signToken({ sub: userId, email, role: "applicant", appStatus: "prequal" });
 
     const res = NextResponse.json({ id: userId, name, email }, { status: 201 });
     res.cookies.set("session", token, {

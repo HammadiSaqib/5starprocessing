@@ -34,13 +34,18 @@ export default function LoginPage() {
       
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
-        const role = String((data as { role?: string }).role || "").toLowerCase();
-        if (role === "admin") {
-          router.replace("/admin");
-        } else if (role === "team") {
-          router.replace("/team");
+        const next = String((data as { next?: string }).next || "");
+        if (next) {
+          router.replace(next);
         } else {
-          router.replace("/portal/prequal");
+          const role = String((data as { role?: string }).role || "").toLowerCase();
+          if (role === "admin") {
+            router.replace("/admin");
+          } else if (role === "team") {
+            router.replace("/team");
+          } else {
+            router.replace("/portal/prequal");
+          }
         }
       } else {
         const data = await res.json().catch(() => ({ error: "Login failed" }));

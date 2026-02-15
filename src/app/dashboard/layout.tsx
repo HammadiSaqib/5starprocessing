@@ -73,7 +73,7 @@ export default function DashboardLayout({
         variants={sidebarVariants}
         initial="closed"
         animate={sidebarOpen ? "open" : "open"}
-        className={`fixed lg:relative inset-y-0 left-0 ${isSidebarCollapsed ? "w-28" : "w-80"} bg-white border-r border-slate-200 z-50 transform lg:transform-none transition-all duration-300 ease-in-out ${
+        className={`fixed lg:relative top-0 h-screen ${isSidebarCollapsed ? "w-20" : "w-72"} bg-white border-r border-slate-200 z-50 transform lg:transform-none transition-all duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >

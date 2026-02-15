@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const userId = await upsertUserAuto(name, email, phone);
     const app = await getOrCreateApplication(userId);
     await queueNotification(userId, app.id, "email", "started_incomplete", 24);
-    const token = await signToken({ sub: userId, email, role: "applicant" });
+    const token = await signToken({ sub: userId, email, role: "applicant", appStatus: "prequal" });
     const res = NextResponse.json({ next: "/portal/prequal" }, { status: 200 });
     res.cookies.set("session", token, {
       httpOnly: true,

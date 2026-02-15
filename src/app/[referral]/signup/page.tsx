@@ -77,7 +77,7 @@ export default function ReferralSignupPage() {
       });
       
       if (res.ok) {
-        // Redirect to login or portal
+        // Redirect to prequal flow
         router.push("/portal/prequal");
       } else {
         const data = await res.json().catch(() => ({ error: "Signup failed" }));

@@ -31,8 +31,8 @@ export async function middleware(req: NextRequest) {
       const teamUrl = new URL("/team", req.url);
       return NextResponse.redirect(teamUrl);
     }
-    const portalUrl = new URL("/portal/prequal", req.url);
-    return NextResponse.redirect(portalUrl);
+    const u = new URL("/dashboard", req.url);
+    return NextResponse.redirect(u);
   }
 
   if (pathname.startsWith("/admin")) {
